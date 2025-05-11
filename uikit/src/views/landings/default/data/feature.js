@@ -72,7 +72,7 @@ export const feature5 = {
 };
 
 export const feature20 = {
-  heading: 'Comprehensive UI Kit Tailored to your Need',
+  heading: 'A Customer Service AI — Tailored to your Need',
   caption: 'Ready to transform your SaaS designs with one powerful UI Kit?',
   actionBtn: { children: 'Buy Now', href: BUY_NOW_URL, ...linkProps },
   secondaryBtn: { children: 'Explore Blocks', href: SECTION_PATH },
@@ -262,20 +262,20 @@ export const feature23 = {
 };
 
 export const feature18 = {
-  heading: 'Powerful Admin Interface',
-  caption: 'Manage data, users, and workflows effortlessly with intuitive, customizable admin controls and features.',
+  heading: 'Powerful Restaurant Admin Interface',
+  caption: 'Manage data, users, and reservations effortlessly with intuitive, customizable AI Powered admin controls and features.',
   topics: [
     {
       icon: 'tabler-sparkles',
-      title: 'Material UI Powered',
-      title2: 'Leverage Power of Material UI Components',
-      description: 'The power and flexibility of Material UI components in admin template',
+      title: 'AI Powered',
+      title2: 'Leverage Power of AI for Reservation Streamlining',
+      description: 'Automate and optimize your reservation management with our controls.',
       image: '/assets/images/graphics/default/admin-dashboard.png',
       list: [
-        { primary: 'Next.js JavaScript/TypeScript' },
-        { primary: 'Customizable Themes' },
-        { primary: 'Rich Form and Table Components' },
-        { primary: 'Responsive Grid System' }
+        { primary: 'Something abt Auto filling in the seats' },
+        { primary: 'Auto user management with QR codes system' },
+        { primary: 'Provide personalized menu recs based on dish availability' },
+        { primary: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }
       ],
       actionBtn: { children: 'View Dashboard', href: ADMIN_PATH, ...linkProps },
       actionBtn2: { children: 'Docs', href: DOCS_URL, ...linkProps }

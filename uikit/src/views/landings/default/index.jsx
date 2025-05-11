@@ -31,13 +31,13 @@ export default function Main() {
   return (
     <>
       <Hero17 {...hero} />
-      <Feature20 {...feature20} />
+      {/* <Feature20 {...feature20} /> */}
 
       <LazySection
         sections={[
-          { importFunc: () => import('@/blocks/benefit').then((module) => ({ default: module.Benefit5 })), props: benefit },
+          // { importFunc: () => import('@/blocks/benefit').then((module) => ({ default: module.Benefit5 })), props: benefit },
           { importFunc: () => import('@/blocks/integration').then((module) => ({ default: module.Integration2 })), props: integration },
-          { importFunc: () => import('@/blocks/other').then((module) => ({ default: module.Other1 })), props: other }
+          // { importFunc: () => import('@/blocks/other').then((module) => ({ default: module.Other1 })), props: other }
         ]}
         offset="200px"
       />

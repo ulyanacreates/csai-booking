@@ -168,7 +168,7 @@ export default function Hero17({ chip, headLine, captionLine, primaryBtn, videoS
                   ease: [0.215, 0.61, 0.355, 1]
                 }}
               >
-                <Typography variant="h6" align="center" sx={{ color: 'text.secondary', maxWidth: 650 }}>
+                <Typography variant="h6" align="center" sx={{ color: 'text.secondary', maxWidth: 650, whiteSpace: 'pre-line' }}>
                   {captionLine}
                 </Typography>
               </motion.div>
