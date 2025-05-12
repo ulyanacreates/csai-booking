@@ -1,68 +1,91 @@
-// @mui
-import Stack from '@mui/material/Stack';
+'use client';
 
-// @project
-import branding from '@/branding.json';
-import ContainerWrapper from '@/components/ContainerWrapper';
-import SectionHero from '@/components/SectionHero';
-import Simulator from '@/components/Simulator';
-import SimulatorTypeset from '@/components/SimulatorTypeset';
-import { PRIVIEW_PATH, SECTION_PATH } from '@/path';
-import { FIGMA_LINK } from '@/utils/constant';
+import { useState } from 'react';
+import {
+  Box,
+  Tab,
+  Tabs,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Paper
+} from '@mui/material';
 
-/***************************  ABOUT - BREADCRUMBS  ***************************/
+export default function AuthPage() {
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
-let breadcrumbs = [
-  { title: 'Home', to: process.env.NEXT_PUBLIC_BASE_NAME || '/' },
-  { title: 'Blocks', to: SECTION_PATH },
-  { title: 'About' }
-];
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (mode === 'signup' && password !== confirm) {
+      alert('Passwords do not match');
+      return;
+    }
+    // Replace with actual auth logic
+    alert(`${mode === 'login' ? 'Logging in' : 'Signing up'} as ${email}`);
+  };
 
-/***************************  ABOUT - DATA  ***************************/
-
-const sectionsData = [
-  {
-    typeset: {
-      heading: 'About Section - 01',
-      caption: '',
-      figmaLink: FIGMA_LINK.about.variant.about1
-    },
-    src: PRIVIEW_PATH.about.about1
-  },
-  {
-    typeset: {
-      heading: 'About Section - 02',
-      caption: '',
-      figmaLink: FIGMA_LINK.about.variant.about2
-    },
-    src: PRIVIEW_PATH.about.about2
-  },
-  {
-    typeset: {
-      heading: 'About Section - 03',
-      caption: '',
-      figmaLink: FIGMA_LINK.about.variant.about3
-    },
-    src: PRIVIEW_PATH.about.about3
-  }
-];
-
-/***************************  SECTIONS - ABOUT  ***************************/
-
-export default function About() {
   return (
-    <>
-      <SectionHero {...{ heading: `${branding.brandName} About Sections`, breadcrumbs }} />
-      <ContainerWrapper>
-        <Stack sx={{ gap: { xs: 3, sm: 4, md: 5 }, my: 6 }}>
-          {sectionsData.map((item, index) => (
-            <Stack key={index} sx={{ gap: { xs: 1.5, md: 2.5 } }}>
-              <SimulatorTypeset {...item.typeset} />
-              <Simulator src={item.src} />
-            </Stack>
-          ))}
-        </Stack>
-      </ContainerWrapper>
-    </>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5'
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+        <Typography variant="h5" gutterBottom textAlign="center">
+          {mode === 'login' ? 'Login' : 'Sign Up'}
+        </Typography>
+
+        <Tabs
+          value={mode}
+          onChange={(_, newValue) => setMode(newValue)}
+          variant="fullWidth"
+        >
+          <Tab label="Login" value="login" />
+          <Tab label="Sign Up" value="signup" />
+        </Tabs>
+
+        <Box component="form" onSubmit={handleSubmit} mt={3}>
+          <Stack spacing={2}>
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <TextField
+              label="Password"
+              type="password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {mode === 'signup' && (
+              <TextField
+                label="Confirm Password"
+                type="password"
+                fullWidth
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+              />
+            )}
+            <Button type="submit" variant="contained" color="primary" fullWidth>
+              {mode === 'login' ? 'Login' : 'Sign Up'}
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Box>
   );
 }

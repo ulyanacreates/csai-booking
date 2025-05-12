@@ -2,8 +2,10 @@
 import CardMedia from '@mui/material/CardMedia';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
-import { SECTION_PATH } from '@/path';
-
+import { SECTION_PATH, PAGE_PATH } from '@/path';
+function path(urlChunks) {
+  return urlChunks.join('/');
+}
 export const hero = {
   chip: {
     // label: (
@@ -33,8 +35,9 @@ export const hero = {
   },
   headLine: 'AI Customer Service for your very special bookings ',
   captionLine: 'A platform for automated customer service support.\n Voice-based AI recommendations and booking management for customers. \n Automated management workflows for your business.',
-  primaryBtn: { children: 'Log in', href: SECTION_PATH },
+  primaryBtn: { children: 'Log in', href: PAGE_PATH.login },
   // videoSrc: 'https://d2elhhoq00m1pj.cloudfront.net/saasable-intro.mp4',
+  
   // Maybe put some video in here if we can find anything related? 
   // videoThumbnail: '/assets/videos/thumbnails/intro-thumbnail.png',
   listData: [

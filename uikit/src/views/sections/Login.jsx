@@ -1,90 +1,91 @@
-// @mui
-import Stack from '@mui/material/Stack';
+'use client';
 
-// @project
-import branding from '@/branding.json';
-import ContainerWrapper from '@/components/ContainerWrapper';
-import SectionHero from '@/components/SectionHero';
-import Simulator from '@/components/Simulator';
-import SimulatorTypeset from '@/components/SimulatorTypeset';
+import { useState } from 'react';
+import {
+  Box,
+  Tab,
+  Tabs,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Paper
+} from '@mui/material';
 
-import { PRIVIEW_PATH, SECTION_PATH } from '@/path';
-import { FIGMA_LINK } from '@/utils/constant';
+export default function AuthPage() {
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
-/***************************  LOGIN - BREADCRUMBS  ***************************/
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (mode === 'signup' && password !== confirm) {
+      alert('Passwords do not match');
+      return;
+    }
+    // Replace with actual auth logic
+    alert(`${mode === 'login' ? 'Logging in' : 'Signing up'} as ${email}`);
+  };
 
-let breadcrumbs = [
-  { title: 'Home', to: process.env.NEXT_PUBLIC_BASE_NAME || '/' },
-  { title: 'Components', to: SECTION_PATH },
-  { title: 'Login' }
-];
-
-/***************************  LOGIN - DATA  ***************************/
-
-const sectionsData = [
-  {
-    typeset: {
-      heading: 'Default login section 01',
-      caption:
-        'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.',
-      figmaLink: FIGMA_LINK.auth.login.variant.login1
-    },
-    src: PRIVIEW_PATH.proPage
-  },
-  {
-    typeset: {
-      heading: 'Default login section 02',
-      caption:
-        'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.',
-      figmaLink: FIGMA_LINK.auth.login.variant.login2
-    },
-    src: PRIVIEW_PATH.proPage
-  },
-  {
-    typeset: {
-      heading: 'Default login section 03',
-      caption:
-        'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.',
-      figmaLink: FIGMA_LINK.auth.login.variant.login3
-    },
-    src: PRIVIEW_PATH.proPage
-  },
-  {
-    typeset: {
-      heading: 'Default login section 04',
-      caption:
-        'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.',
-      figmaLink: FIGMA_LINK.auth.login.variant.login4
-    },
-    src: PRIVIEW_PATH.proPage
-  },
-  {
-    typeset: {
-      heading: 'Default login section 05',
-      caption:
-        'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.',
-      figmaLink: FIGMA_LINK.auth.login.variant.login5
-    },
-    src: PRIVIEW_PATH.proPage
-  }
-];
-
-/***************************  SECTIONS - LOGIN  ***************************/
-
-export default function Login() {
   return (
-    <>
-      <SectionHero {...{ heading: `${branding.brandName} Login Section`, breadcrumbs }} />
-      <ContainerWrapper>
-        <Stack sx={{ gap: { xs: 3, sm: 4, md: 5 }, my: 6 }}>
-          {sectionsData.map((item, index) => (
-            <Stack key={index} sx={{ gap: { xs: 1.5, md: 2.5 } }}>
-              <SimulatorTypeset {...item.typeset} />
-              <Simulator src={item.src} />
-            </Stack>
-          ))}
-        </Stack>
-      </ContainerWrapper>
-    </>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5'
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+        <Typography variant="h5" gutterBottom textAlign="center">
+          {mode === 'login' ? 'Login' : 'Sign Up'}
+        </Typography>
+
+        <Tabs
+          value={mode}
+          onChange={(_, newValue) => setMode(newValue)}
+          variant="fullWidth"
+        >
+          <Tab label="Login" value="login" />
+          <Tab label="Sign Up" value="signup" />
+        </Tabs>
+
+        <Box component="form" onSubmit={handleSubmit} mt={3}>
+          <Stack spacing={2}>
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <TextField
+              label="Password"
+              type="password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {mode === 'signup' && (
+              <TextField
+                label="Confirm Password"
+                type="password"
+                fullWidth
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+              />
+            )}
+            <Button type="submit" variant="contained" color="primary" fullWidth>
+              {mode === 'login' ? 'Login' : 'Sign Up'}
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Box>
   );
 }
