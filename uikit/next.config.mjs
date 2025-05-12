@@ -9,7 +9,7 @@ const cspHeader = `
     base-uri 'self';
     form-action 'self';
     media-src 'self' https://*.cloudfront.net;
-    connect-src 'self' https://www.googletagmanager.com https://raw.githubusercontent.com https://phpstack-207002-5085356.cloudwaysapps.com https://*.clarity.ms https://*.azurewebsites.net;
+    connect-src 'self' http://localhost:8000 https://www.googletagmanager.com https://raw.githubusercontent.com https://phpstack-207002-5085356.cloudwaysapps.com https://*.clarity.ms https://*.azurewebsites.net;
 `;
 
 const nextConfig = {

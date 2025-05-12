@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import {
   Box,
   Tab,
@@ -11,81 +12,148 @@ import {
   Stack,
   Paper
 } from '@mui/material';
-
+import MenuItem from '@mui/material/MenuItem';
 export default function AuthPage() {
-  const [mode, setMode] = useState('login');
+ const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [phone, setPhone] = useState('');
+  const [userType, setUserType] = useState('');
+  const [name, setName] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (mode === 'signup' && password !== confirm) {
-      alert('Passwords do not match');
-      return;
-    }
-    // Replace with actual auth logic
-    alert(`${mode === 'login' ? 'Logging in' : 'Signing up'} as ${email}`);
-  };
+ const API_URL = 'http://localhost:8000/';
+
+  // handleSubmit goes here - before return but after all state declarations
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (mode === 'signup' && password !== confirm) {
+    setError('Passwords do not match');
+    return;
+  }
+
+  try {
+    const endpoint = mode === 'login' ? '/auth/login' : '/auth/signup';
+
+    const payload =
+      mode === 'login'
+        ? { email, password }
+        : {
+            email,
+            password,
+            name,
+            phone,
+            user_type: userType
+          };
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error('Authentication failed');
+
+    const data = await response.json();
+    // Handle login/signup success, e.g., store token, redirect, etc.
+  } catch (err) {
+    setError(err.message || 'Authentication error');
+  }
+}; 
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5'
-      }}
+  <Box
+  sx={{
+    minHeight: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5'
+  }}
+>
+  <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+    <Typography variant="h5" gutterBottom textAlign="center">
+      {mode === 'login' ? 'Login' : 'Sign Up'}
+    </Typography>
+
+    <Tabs
+      value={mode}
+      onChange={(_, newValue) => setMode(newValue)}
+      variant="fullWidth"
     >
-      <Paper elevation={3} sx={{ p: 4, width: 360 }}>
-        <Typography variant="h5" gutterBottom textAlign="center">
+      <Tab label="Login" value="login" />
+      <Tab label="Sign Up" value="signup" />
+    </Tabs>
+
+    <Box component="form" onSubmit={handleSubmit} mt={3}>
+      <Stack spacing={2}>
+        {mode === 'signup' && (
+          <>
+            <TextField
+              label="Full Name"
+              type="text"
+              fullWidth
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <TextField
+              label="Phone Number"
+              type="tel"
+              fullWidth
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+            <TextField
+              label="User Type"
+              select
+              fullWidth
+              value={userType}
+              onChange={(e) => setUserType(e.target.value)}
+              required
+            >
+              <MenuItem value="customer">Customer</MenuItem>
+              <MenuItem value="company">Company</MenuItem>
+            </TextField>
+          </>
+        )}
+
+        <TextField
+          label="User Name"
+          type="text"
+          fullWidth
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <TextField
+          label="Password"
+          type="password"
+          fullWidth
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {mode === 'signup' && (
+          <TextField
+            label="Confirm Password"
+            type="password"
+            fullWidth
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+          />
+        )}
+        <Button type="submit" variant="contained" color="primary" fullWidth>
           {mode === 'login' ? 'Login' : 'Sign Up'}
-        </Typography>
-
-        <Tabs
-          value={mode}
-          onChange={(_, newValue) => setMode(newValue)}
-          variant="fullWidth"
-        >
-          <Tab label="Login" value="login" />
-          <Tab label="Sign Up" value="signup" />
-        </Tabs>
-
-        <Box component="form" onSubmit={handleSubmit} mt={3}>
-          <Stack spacing={2}>
-            <TextField
-              label="Email"
-              type="email"
-              fullWidth
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              fullWidth
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            {mode === 'signup' && (
-              <TextField
-                label="Confirm Password"
-                type="password"
-                fullWidth
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-              />
-            )}
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              {mode === 'login' ? 'Login' : 'Sign Up'}
-            </Button>
-          </Stack>
-        </Box>
-      </Paper>
+        </Button>
+      </Stack>
     </Box>
-  );
+  </Paper>
+</Box>
+)
 }
