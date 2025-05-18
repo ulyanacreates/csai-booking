@@ -4,13 +4,15 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
 // @project
-import { navbar } from '../landings/default/data';
+import { getNavbar } from '../landings/default/data';
 import { Navbar10 } from '@/blocks/navbar';
 import { NavbarContent10 } from '@/blocks/navbar/navbar-content';
 
 /***************************  LANDING - SECTIONS  ***************************/
 
+
 export default function SectionsLayout({ children }) {
+  const navbar = getNavbar();
   return (
     <>
       <Box sx={{ bgcolor: 'grey.100' }}>

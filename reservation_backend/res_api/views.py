@@ -24,8 +24,9 @@ def login(req: HttpRequest):
         if check_password(password , user.password) :
             token = generate_jwt_token(username)
             return request_success({"token":token,
-                                    "user_id":user.id,
-                                    "img_id":user.image_id})
+                                    "user_id": user.id,
+                                    "user_name": username
+                                    })
         else :
             return request_failed(2,"Wrong password",401)
     except:
@@ -47,6 +48,8 @@ def register(req: HttpRequest):
     password_ = require(body, "password", "string", err_msg="Missing or error type of [password]")
     # email_ = require(body,"email", "string", err_msg="Missing or error type of [email]")
     phonnm_ = require(body,"phoneNumber", "string", err_msg="Missing or error type of [phoneNumber]")
+    user_type = require(body,"user_type", "string", err_msg="Missing or error type of [user_type]")
+    
     # img_id = require(body,"img_id", "string", err_msg="Missing or error type of [img_id]")
     
     if (len(username_) == 0 or len(username_) > 20):
@@ -63,10 +66,27 @@ def register(req: HttpRequest):
         return request_failed(2,"Existing username",401)
     user_ = User.objects.create(name=username_,
                                 password=make_password(password_),
-                                image_id=img_id,
-                                phone=phonnm_,
-                                email=email_)
+                                user_type=user_type,
+                                phone=phonnm_)
     user_.save()
     token = generate_jwt_token(username_)
     return request_success({"token": token,
                             "user_id":user_.id})
+
+def verify_loggedin(req: HttpRequest):
+    if req.method != "POST":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    body = json.loads(req.body.decode("utf-8"))
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    
+    user_id= require(body,"user_id","string",err_msg="Missing or error type of [userName]")
+    user = User.objects.get(id=user_id)
+    if user.name != jwt_payload["username"] or user.login_status == False :
+        return request_failed(3,"Permission denied",403)
+    
+    return request_success()
+    
+

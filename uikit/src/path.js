@@ -13,13 +13,14 @@ const AUTH_PATH = 'auth';
 export const PAGE_PATH = {
   // auth pages path
   login: path([SECTION_PATH, AUTH_PATH, 'login']),
+  user_page: path([SECTION_PATH, AUTH_PATH, 'user']),
   forgotPassword: path([SECTION_PATH, AUTH_PATH, 'forgot-password']),
   newPassword: path([SECTION_PATH, AUTH_PATH, 'new-password']),
   otpVerification: path([SECTION_PATH, AUTH_PATH, 'otp-verification']),
   register: path([SECTION_PATH, AUTH_PATH, 'register']),
 
   about: path([SECTION_PATH, 'about']),
-  benefit: path([SECTION_PATH, 'benefit']),
+  user_page: path([SECTION_PATH, 'benefit']),
   blog: path([SECTION_PATH, 'blog']),
   clientele: path([SECTION_PATH, 'clientele']),
   color: path([SECTION_PATH, 'color']),

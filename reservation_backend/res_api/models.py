@@ -20,7 +20,6 @@ class User(models.Model):
         return {
             "id": self.id, 
             "name": self.name, 
-            "createdAt": self.created_time,
         }
     
     def __str__(self) -> str:

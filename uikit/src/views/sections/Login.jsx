@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   Box,
@@ -23,8 +24,9 @@ export default function AuthPage() {
   const [phone, setPhone] = useState('');
   const [userType, setUserType] = useState('');
   const [name, setName] = useState('');
+  const router = useRouter();
 
- const API_URL = 'http://localhost:8000/';
+ const API_URL = 'http://localhost:8000';
 
   // handleSubmit goes here - before return but after all state declarations
 const handleSubmit = async (e) => {
@@ -40,12 +42,12 @@ const handleSubmit = async (e) => {
 
     const payload =
       mode === 'login'
-        ? { email, password }
+        ? { userName: email,
+          password: password }
         : {
-            email,
-            password,
-            name,
-            phone,
+            userName: email,
+            password: password,
+            phoneNumber: phone,
             user_type: userType
           };
 
@@ -55,10 +57,12 @@ const handleSubmit = async (e) => {
       body: JSON.stringify(payload)
     });
 
-    if (!response.ok) throw new Error('Authentication failed');
-
+    if (!response.ok) {alert("Incorrect login/password");}
+    else {
     const data = await response.json();
-    // Handle login/signup success, e.g., store token, redirect, etc.
+      localStorage.setItem("user", JSON.stringify(data));
+      router.push('/')  
+    }    
   } catch (err) {
     setError(err.message || 'Authentication error');
   }

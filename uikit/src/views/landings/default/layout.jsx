@@ -10,12 +10,15 @@ import { Navbar10 } from '@/blocks/navbar';
 import { NavbarContent10 } from '@/blocks/navbar/navbar-content';
 
 // @data
-import { navbar } from './data';
+import { getNavbar } from './data';
+
 
 /***************************  LAYOUT - MAIN  ***************************/
 
 export default function MainLayout({ children }) {
+  const navbar = getNavbar();
   return (
+    
     <>
       {/* header section */}
       <Box sx={{ bgcolor: 'grey.100' }}>
