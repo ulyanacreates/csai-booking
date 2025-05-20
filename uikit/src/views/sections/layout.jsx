@@ -25,4 +25,4 @@ export default function SectionsLayout({ children }) {
   );
 }
 
-SectionsLayout.propTypes = { children: PropTypes.any };
+SectionsLayout.propTypes = { children: PropTypes.any,navbarContent: PropTypes.object, };

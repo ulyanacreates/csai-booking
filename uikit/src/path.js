@@ -9,6 +9,7 @@ export const FREEBIES_URL = 'https://github.com/phoenixcoded/saasable-ui';
 export const DOCS_URL = 'https://phoenixcoded.gitbook.io/saasable ';
 export const BLOCK_PATH = '/blocks';
 export const BUSINESS_PATH = '/sections/business';
+export const CUSTOMER_PATH = '/sections/customer';
 const AUTH_PATH = 'auth';
 
 export const PAGE_PATH = {
@@ -23,8 +24,6 @@ export const PAGE_PATH = {
   about: path([SECTION_PATH, 'about']),
   user_page: path([SECTION_PATH, 'benefit']),
   blog: path([SECTION_PATH, 'blog']),
-  business: path([SECTION_PATH, 'business']),
-  clientele: path([SECTION_PATH, 'clientele']),
   color: path([SECTION_PATH, 'color']),
   comingSoon: path([SECTION_PATH, 'coming-soon']),
   contactUs: path([SECTION_PATH, 'contact-us']),
@@ -104,15 +103,6 @@ export const PRIVIEW_PATH = {
     blog5: path([BLOCK_PATH, 'blog', 'blog5']),
     blog6: path([BLOCK_PATH, 'blog', 'blog6']),
     blog7: path([BLOCK_PATH, 'blog', 'blog7'])
-  },
-  clientele: {
-    clientele1: path([BLOCK_PATH, 'clientele', 'clientele1']),
-    clientele2: path([BLOCK_PATH, 'clientele', 'clientele2']),
-    clientele3: path([BLOCK_PATH, 'clientele', 'clientele3']),
-    clientele4: path([BLOCK_PATH, 'clientele', 'clientele4']),
-    clientele5: path([BLOCK_PATH, 'clientele', 'clientele5']),
-    clientele6: path([BLOCK_PATH, 'clientele', 'clientele6']),
-    clientele7: path([BLOCK_PATH, 'clientele', 'clientele7'])
   },
   cta: {
     cta1: path([BLOCK_PATH, 'cta', 'cta1']),

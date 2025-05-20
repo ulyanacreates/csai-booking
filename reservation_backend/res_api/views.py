@@ -1,14 +1,16 @@
 from django.shortcuts import render
 import json
 from django.http import HttpRequest, HttpResponse
-from res_api.models import User
+from res_api.models import User, ChatMessage,ChatSession
 from .utils.utils_request import BAD_METHOD, request_failed, request_success, return_field
-from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require
+from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require,client
 from .utils.utils_time import get_timestamp
 from .utils.utils_jwt import generate_jwt_token, check_jwt_token
 from django.contrib.auth.hashers import make_password, check_password
 import re
 # Create your views here.
+
+
 
 @CheckRequire
 def login(req: HttpRequest):
@@ -88,5 +90,35 @@ def verify_loggedin(req: HttpRequest):
         return request_failed(3,"Permission denied",403)
     
     return request_success()
+    
+
+def voice_message(req: HttpRequest):
+    # if req.method != "POST":
+    #     return BAD_METHOD
+    # # print(req)
+    # audio_file = req.FILES['audio']
+    # return request_success()
+    pass
+def text_message(req:HttpRequest):
+    if req.method != "POST":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    body = json.loads(req.body.decode("utf-8"))
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    body = json.load(req.body.decode("utf-8"))
+    user_id= require(body,"user_id","string",err_msg="Missing or error type of [userName]")
+    user_ = User.objects.get(id=user_id)
+    session = ChatSession.objects.get(user=user_)
+    messages = session.messages.order_by("timestamp")
+    messages_asst = []
+    for msg in messages:
+        dct = {}
+        dct["role"] = msg.role
+        dct["content"] = msg.content
+        messages_asst.append(dct)
+
+
     
 

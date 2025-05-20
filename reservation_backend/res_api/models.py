@@ -31,4 +31,25 @@ class ReservationInfo(models.Model):
     phone = models.CharField(max_length=MAX_CHAR_LENGTH,default="")
     reservation_time = models.DateTimeField(default=datetime.datetime(1970, 1, 1, tzinfo=timezone.utc))
 
+class ChatSession(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return f"Session {self.id} for {self.user}"
+    
+class ChatMessage(models.Model):
+    ROLE_CHOICES = (
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+    )
+
+    session = models.ForeignKey(ChatSession, related_name='messages', on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.timestamp}] {self.role}: {self.content[:50]}"

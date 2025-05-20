@@ -1,54 +1,52 @@
-// @mui
-import Stack from '@mui/material/Stack';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
-// @project
-import branding from '@/branding.json';
-import ContainerWrapper from '@/components/ContainerWrapper';
-import SectionHero from '@/components/SectionHero';
-import Simulator from '@/components/Simulator';
-import SimulatorTypeset from '@/components/SimulatorTypeset';
-import { PRIVIEW_PATH, SECTION_PATH } from '@/path';
-import { FIGMA_LINK } from '@/utils/constant';
+export default function RestaurantLayoutEditor() {
+  const [tables, setTables] = useState([]);
 
-/***************************  BLOG - BREADCRUMBS  ***************************/
+  const addTable = () => {
+    const newTable = {
+      id: Date.now(),
+      x: 50,
+      y: 50,
+      width: 60,
+      height: 60,
+    };
+    setTables([...tables, newTable]);
+  };
 
-let breadcrumbs = [
-  { title: 'Home', to: process.env.NEXT_PUBLIC_BASE_NAME || '/' },
-  { title: 'Components', to: SECTION_PATH },
-  { title: 'Blog' }
-];
+  const updateTablePosition = (id, x, y) => {
+    setTables((prev) =>
+      prev.map((table) => (table.id === id ? { ...table, x, y } : table))
+    );
+  };
 
-/***************************  BLOG - DATA  ***************************/
-
-const caption =
-  'Use this default example with an announcement badge, heading, CTA buttons, and customer logos to showcase what your website offers.';
-
-const sectionsData = [
-  { typeset: { heading: 'Default blog section 01', caption, figmaLink: FIGMA_LINK.blog.variant.blog1 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 02', caption, figmaLink: FIGMA_LINK.blog.variant.blog2 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 03', caption, figmaLink: FIGMA_LINK.blog.variant.blog3 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 04', caption, figmaLink: FIGMA_LINK.blog.variant.blog4 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 05', caption, figmaLink: FIGMA_LINK.blog.variant.blog5 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 06', caption, figmaLink: FIGMA_LINK.blog.variant.blog6 }, src: PRIVIEW_PATH.proPage },
-  { typeset: { heading: 'Default blog section 07', caption, figmaLink: FIGMA_LINK.blog.variant.blog7 }, src: PRIVIEW_PATH.proPage }
-];
-
-/***************************  SECTIONS - BLOG  ***************************/
-
-export default function Blog() {
   return (
-    <>
-      <SectionHero {...{ heading: `${branding.brandName} Blog Section`, breadcrumbs }} />
-      <ContainerWrapper>
-        <Stack sx={{ gap: { xs: 3, sm: 4, md: 5 }, my: 6 }}>
-          {sectionsData.map((item, index) => (
-            <Stack key={index} sx={{ gap: { xs: 1.5, md: 2.5 } }}>
-              <SimulatorTypeset {...item.typeset} />
-              <Simulator src={item.src} />
-            </Stack>
-          ))}
-        </Stack>
-      </ContainerWrapper>
-    </>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-4">Restaurant Layout Editor</h2>
+      <Button onClick={addTable}>Add Table</Button>
+      <div className="relative w-full h-[600px] border mt-4 bg-gray-50">
+        {tables.map((table) => (
+          <div
+            key={table.id}
+            className="absolute bg-green-500 text-white flex items-center justify-center cursor-move"
+            style={{
+              top: table.y,
+              left: table.x,
+              width: table.width,
+              height: table.height,
+            }}
+            draggable
+            onDragEnd={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              updateTablePosition(table.id, rect.left - 20, rect.top - 120);
+            }}
+          >
+            Table
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

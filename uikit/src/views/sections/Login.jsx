@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { CUSTOMER_PATH, BUSINESS_PATH } from '@/path';
 import {
   Box,
   Tab,
@@ -59,9 +59,11 @@ const handleSubmit = async (e) => {
 
     if (!response.ok) {alert("Incorrect login/password");}
     else {
-    const data = await response.json();
+      const data = await response.json();
+     
       localStorage.setItem("user", JSON.stringify(data));
-      router.push('/')  
+      // alert(user)
+      router.push("/")
     }    
   } catch (err) {
     setError(err.message || 'Authentication error');

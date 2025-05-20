@@ -2,7 +2,7 @@
 'use client';
 import { landingMegamenu, pagesMegamenu } from '../../common-data';
 import SvgIcon from '@/components/SvgIcon';
-import { SECTION_PATH, ADMIN_PATH, PAGE_PATH, DOCS_URL, FREEBIES_URL, BUSINESS_PATH } from '@/path';
+import { SECTION_PATH, ADMIN_PATH, PAGE_PATH, DOCS_URL, FREEBIES_URL, CUSTOMER_PATH } from '@/path';
 
 /***************************  DEFAULT - NAVBAR  ***************************/
 
@@ -38,7 +38,7 @@ export const getNavbar = () => {
       : { children: 'Log in', href: PAGE_PATH.login },
     navItems: user 
       ? [ { id: 'home', title: 'Home', link: '/' },
-          { id: 'components', title: 'Make a Reservation', link: SECTION_PATH },
+          { id: 'components', title: 'Make a Reservation', link: CUSTOMER_PATH },
           { id: 'components', title: "Previous Reservations", link: SECTION_PATH},
         ]
       : [
