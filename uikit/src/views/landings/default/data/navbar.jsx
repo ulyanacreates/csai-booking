@@ -2,7 +2,7 @@
 'use client';
 import { landingMegamenu, pagesMegamenu } from '../../common-data';
 import SvgIcon from '@/components/SvgIcon';
-import { SECTION_PATH, ADMIN_PATH, PAGE_PATH, DOCS_URL, FREEBIES_URL, CUSTOMER_PATH } from '@/path';
+import { SECTION_PATH, ADMIN_PATH, PAGE_PATH, DOCS_URL, FREEBIES_URL,BUSINESS_PATH, CUSTOMER_PATH } from '@/path';
 
 /***************************  DEFAULT - NAVBAR  ***************************/
 
