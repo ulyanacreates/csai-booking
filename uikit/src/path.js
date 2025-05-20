@@ -8,6 +8,7 @@ export const BUY_NOW_URL = 'https://mui.com/store/items/saasable-multipurpose-ui
 export const FREEBIES_URL = 'https://github.com/phoenixcoded/saasable-ui';
 export const DOCS_URL = 'https://phoenixcoded.gitbook.io/saasable ';
 export const BLOCK_PATH = '/blocks';
+export const BUSINESS_PATH = '/sections/business';
 const AUTH_PATH = 'auth';
 
 export const PAGE_PATH = {
@@ -22,6 +23,7 @@ export const PAGE_PATH = {
   about: path([SECTION_PATH, 'about']),
   user_page: path([SECTION_PATH, 'benefit']),
   blog: path([SECTION_PATH, 'blog']),
+  business: path([SECTION_PATH, 'business']),
   clientele: path([SECTION_PATH, 'clientele']),
   color: path([SECTION_PATH, 'color']),
   comingSoon: path([SECTION_PATH, 'coming-soon']),
