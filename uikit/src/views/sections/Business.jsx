@@ -11,6 +11,13 @@ import ListItemText from '@mui/material/ListItemText';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField'; // Added TextField
+import IconButton from '@mui/material/IconButton'; // Added IconButton
+import EditIcon from '@mui/icons-material/Edit'; // Added EditIcon
+import SaveIcon from '@mui/icons-material/Save'; // Added SaveIcon
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'; // Added AddIcon
+import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart'; // For Sold Out
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'; // For Available
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
 
@@ -18,7 +25,7 @@ import { useTheme } from '@mui/material/styles';
 import useDataThemeMode from '@/hooks/useDataThemeMode';
 import { GraphicsCard } from '@/components/cards';
 
-// ... (dummyReservations and sortedReservations remain the same)
+// ... (dummyReservations, sortedReservations, dummyFloorplanItems remain the same)
 // Dummy reservation data
 const dummyReservations = [
   { id: 1, name: 'Alice Wonderland', tableNumber: 5, time: '18:30', numberOfPeople: 2 },
@@ -54,10 +61,19 @@ const dummyFloorplanItems = [
   { id: 'p1', name: 'Patio Seat 5', status: 'Available', capacity: 2 },
 ];
 
+// Dummy data for menu items
+const initialMenuItems = [
+  { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
+  { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
+  { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
+];
+
+
 export default function Business() {
   useDataThemeMode();
   const theme = useTheme();
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
+  const [menuItems, setMenuItems] = useState(initialMenuItems);
 
   useEffect(() => {
     document.title = 'Business View | AI Customer Service';
@@ -65,13 +81,52 @@ export default function Business() {
 
   const listItemApproxHeight = 60; 
   const maxListHeight = listItemApproxHeight * 5.5;
-  const floorplanListMaxHeight = listItemApproxHeight * 4.5; // Max height for floorplan list
+  const floorplanListMaxHeight = listItemApproxHeight * 4.5; 
+  const menuListMaxHeight = listItemApproxHeight * 6;
+
+
+  const handleMenuItemChange = (id, field, value) => {
+    setMenuItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const toggleEditMenuItem = (id) => {
+    setMenuItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, isEditing: !item.isEditing } : item
+      )
+    );
+  };
+  
+  const addNewMenuItem = () => {
+    const newItemId = `m${menuItems.length + 1 + Date.now()}`; // Simple unique ID
+    setMenuItems(prevItems => [
+      ...prevItems,
+      { id: newItemId, name: 'New Item', description: '', price: '0.00', category: 'Uncategorized', isEditing: true }
+    ]);
+  };
+
+  const handleDeleteMenuItem = (id) => {
+    setMenuItems(prevItems => prevItems.filter(item => item.id !== id));
+  };
+
+  const toggleSoldOutStatus = (id) => {
+    setMenuItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, isSoldOut: !item.isSoldOut } : item
+      )
+    );
+  };
+
 
   return (
     <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>
       <Container>
         <Stack spacing={4}>
-
+          {/* ... (Existing Typography and Grid for Reservations/Floorplan) ... */}
           <Grid container spacing={3} justifyContent="space-between"> 
             {/* Reservations List Section */}
             <Grid item xs={12} md={7}>
@@ -85,7 +140,7 @@ export default function Business() {
                 <GraphicsCard 
                   sx={{ 
                     p: { xs: 2, sm: 3 }, 
-                    width: '100%',
+                    width: '330px',
                     boxSizing: 'border-box',
                     backgroundColor: theme.palette.background.paper,
                     border: `1px solid ${theme.palette.divider}`,
@@ -104,7 +159,7 @@ export default function Business() {
                     sx={{ 
                       maxHeight: maxListHeight, 
                       overflowY: 'auto', 
-                      pr: 2, // Adjusted padding
+                      pr: 2, 
                       flexGrow: 1, 
                     }}
                   >
@@ -128,6 +183,7 @@ export default function Business() {
               </motion.div>
             </Grid>
 
+            {/* Floorplan Holder Section */}
             <Grid item xs={12} md={5}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -148,41 +204,37 @@ export default function Business() {
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    // justifyContent: 'space-between', // We'll let content define its space
                   }}
                 >
-
                   <Typography variant="h5" component="h2" gutterBottom sx={{ color: theme.palette.text.primary }}>
                     Restaurant Floorplan
                   </Typography>
-                  
                   <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', my: 2, overflow: 'hidden' }}>
                     {isUserLoggedIn ? (
-                      // Adjust inner Grid container and item props
-                      <Grid container spacing={2} sx={{ flexGrow: 1, height: '100%' }}> {/* Reduced spacing */}
-                        <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}> {/* Image takes 1/3 width */}
+                      <Grid container spacing={1} sx={{ flexGrow: 1, height: '100%' }}>
+                        <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                           <Box
                             component="img"
                             src="/assets/images/floorplan/fp1.jpg" 
                             alt="Restaurant Floorplan"
                             sx={{
-                              maxWidth: '100%', // Fit within its grid column
-                              maxHeight: '300px', // Explicitly smaller max height for the image
-                              width: 'auto',    // Maintain aspect ratio, width will adjust
+                              maxWidth: '100%',
+                              maxHeight: '300px',
+                              width: 'auto',
                               objectFit: 'contain', 
                               borderRadius: 1, 
                             }}
                           />
                         </Grid>
-                        <Grid item xs={8}> {/* List takes 2/3 width */}
-                          <Typography variant="subtitle1" gutterBottom sx={{ color: theme.palette.text.secondary, mt: 0 }}> {/* Adjusted margin top */}
+                        <Grid item xs={8}>
+                          <Typography variant="subtitle1" gutterBottom sx={{ color: theme.palette.text.secondary, mt: 0 }}>
                             Objects:
                           </Typography>
                           <List 
                             dense 
                             sx={{ 
-                              height: 'calc(100% - 24px)', // Attempt to fill available height minus typography
-                              maxHeight: floorplanListMaxHeight, // Still respect overall max height
+                              height: 'calc(100% - 24px)',
+                              maxHeight: floorplanListMaxHeight,
                               overflowY: 'auto',
                               width: '100%',
                               backgroundColor: theme.palette.action.hover, 
@@ -218,7 +270,7 @@ export default function Business() {
                           alignItems: 'center', 
                           justifyContent: 'center',
                           backgroundColor: theme.palette.action.hover,
-                          m: 'auto', // Center the paper when not logged in
+                          m: 'auto',
                         }}
                       >
                         <Typography variant="body1" color="text.secondary">
@@ -227,7 +279,6 @@ export default function Business() {
                       </Paper>
                     )}
                   </Box>
-
                   {isUserLoggedIn && (
                     <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 'auto', pt: 2 }}>
                       <Button variant="outlined" onClick={() => alert('View Analytics Clicked!')}>View Analytics</Button>
@@ -239,7 +290,135 @@ export default function Business() {
             </Grid>
           </Grid>
           
-          <Divider sx={{ mt: 4 }} />
+          <Divider sx={{ my: 4 }} /> {/* Ensure some margin around divider */}
+
+          {/* Menu Details Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <GraphicsCard
+              sx={{
+                p: { xs: 2, sm: 3 },
+                backgroundColor: theme.palette.background.paper,
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                boxShadow: 3,
+              }}
+            >
+              <Stack spacing={2}>
+                <Typography variant="h5" component="h2" sx={{ color: theme.palette.text.primary }}>
+                  Menu Details
+                </Typography>
+                
+                <Button 
+                  variant="contained" 
+                  startIcon={<AddCircleOutlineIcon />} 
+                  onClick={addNewMenuItem}
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  Add New Menu Item
+                </Button>
+
+                <List sx={{ maxHeight: menuListMaxHeight, overflowY: 'auto', pr: 1 }}>
+                  {menuItems.map((item) => (
+                    <ListItem
+                      key={item.id}
+                      divider
+                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 2 }}
+                    >
+                      {item.isEditing ? (
+                        <Stack spacing={2} sx={{ width: '100%' }}>
+                          <TextField
+                            label="Item Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            value={item.name}
+                            onChange={(e) => handleMenuItemChange(item.id, 'name', e.target.value)}
+                          />
+                          <TextField
+                            label="Description"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            value={item.description}
+                            onChange={(e) => handleMenuItemChange(item.id, 'description', e.target.value)}
+                          />
+                          <Grid container spacing={2}>
+                            <Grid item xs={6} sm={4}>
+                              <TextField
+                                label="Price"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={item.price}
+                                onChange={(e) => handleMenuItemChange(item.id, 'price', e.target.value)}
+                              />
+                            </Grid>
+                            <Grid item xs={6} sm={8}>
+                              <TextField
+                                label="Category"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={item.category}
+                                onChange={(e) => handleMenuItemChange(item.id, 'category', e.target.value)}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Stack direction="row" spacing={1} sx={{alignSelf: 'flex-end'}}>
+                            <IconButton onClick={() => toggleEditMenuItem(item.id)} size="small" color="primary">
+                              <SaveIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleDeleteMenuItem(item.id)} size="small" color="error">
+                              <DeleteIcon />
+                            </IconButton>
+                          </Stack>
+                        </Stack>
+                      ) : (
+                        <Box sx={{ width: '100%' }}>
+                          <ListItemText
+                            primary={item.name}
+                            secondary={
+                              <>
+                                <Typography component="span" variant="body2" color={item.isSoldOut ? theme.palette.error.main : "text.secondary"} sx={{ textDecoration: item.isSoldOut ? 'line-through' : 'none' }}>
+                                  {item.description}
+                                </Typography>
+                                <br />
+                                <Typography component="span" variant="caption" color={item.isSoldOut ? theme.palette.error.main : "text.secondary"} sx={{ textDecoration: item.isSoldOut ? 'line-through' : 'none' }}>
+                                  Price: ${item.price} | Category: {item.category}
+                                  {item.isSoldOut && " (Sold Out)"}
+                                </Typography>
+                              </>
+                            }
+                            primaryTypographyProps={{ 
+                              sx: { 
+                                textDecoration: item.isSoldOut ? 'line-through' : 'none',
+                                color: item.isSoldOut ? theme.palette.error.main : 'inherit'
+                              } 
+                            }}
+                          />
+                          <Stack direction="row" spacing={1} sx={{ position: 'absolute', top: 16, right: 16 }}>
+                            <IconButton onClick={() => toggleEditMenuItem(item.id)} size="small">
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton onClick={() => toggleSoldOutStatus(item.id)} size="small" color={item.isSoldOut ? "success" : "warning"}>
+                              {item.isSoldOut ? <AddShoppingCartIcon /> : <RemoveShoppingCartIcon />}
+                            </IconButton>
+                          </Stack>
+                        </Box>
+                      )}
+                    </ListItem>
+                  ))}
+                </List>
+              </Stack>
+            </GraphicsCard>
+          </motion.div>
           
         </Stack>
       </Container>
