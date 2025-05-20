@@ -44,6 +44,7 @@ class ChatMessage(models.Model):
     ROLE_CHOICES = (
         ('user', 'User'),
         ('assistant', 'Assistant'),
+        ('system','System')
     )
 
     session = models.ForeignKey(ChatSession, related_name='messages', on_delete=models.CASCADE)

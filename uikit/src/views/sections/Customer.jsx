@@ -23,6 +23,8 @@ import SendIcon from '@mui/icons-material/Send';
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
 
+
+const API_URL = "http://localhost:8000"
 export default function Customer() {
   const [restaurants, setRestaurants] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -30,7 +32,7 @@ export default function Customer() {
   const [messages, setMessages] = useState([]); 
   const messagesEndRef = useRef(null);
   useEffect(() => {
-    axios.get('/api/restaurants')
+    axios.get(API_URL + '/api/restaurants')
       .then((res) => setRestaurants(res.data))
       .catch((err) => console.error(err));
   }, []);
@@ -46,8 +48,19 @@ useEffect(() => {
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const res = await axios.post('/api/chat/', { message });
-      const botReply = { from: 'bot', text: res.data.response };
+    let user =  JSON.parse(localStorage.getItem('user'))
+    const payload = {
+        user_id: user.user_id,
+        message: message, 
+      };
+      const res = await axios.post(API_URL + '/api/chat/', payload, {
+        headers: {
+          Authorization: `${user.token}`,
+        },
+      });
+      // const res = await axios.post(API_URL + '/api/chat/', { message });
+      console.log(res);
+      const botReply = { from: 'bot', text: res.data.reply };
       setMessages((prev) => [...prev, botReply]);
     } catch (err) {
       console.error(err);

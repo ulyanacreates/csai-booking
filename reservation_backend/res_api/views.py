@@ -3,14 +3,16 @@ import json
 from django.http import HttpRequest, HttpResponse
 from res_api.models import User, ChatMessage,ChatSession
 from .utils.utils_request import BAD_METHOD, request_failed, request_success, return_field
-from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require,client
+from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require
 from .utils.utils_time import get_timestamp
 from .utils.utils_jwt import generate_jwt_token, check_jwt_token
 from django.contrib.auth.hashers import make_password, check_password
 import re
+from zhipuai import ZhipuAI
 # Create your views here.
 
-
+api_key = "76ed5713b6c24a678ba16e6c4f751645.uhWJabToEluWbLJt"
+client = ZhipuAI(api_key=api_key)
 
 @CheckRequire
 def login(req: HttpRequest):
@@ -27,7 +29,8 @@ def login(req: HttpRequest):
             token = generate_jwt_token(username)
             return request_success({"token":token,
                                     "user_id": user.id,
-                                    "user_name": username
+                                    "user_name": username,
+                                    "user_type": user.user_type
                                     })
         else :
             return request_failed(2,"Wrong password",401)
@@ -103,21 +106,60 @@ def text_message(req:HttpRequest):
     if req.method != "POST":
         return BAD_METHOD
     jwt_token = req.headers.get("Authorization")
+    print(jwt_token)
+    print(req.body)
     jwt_payload = check_jwt_token(jwt_token)
     body = json.loads(req.body.decode("utf-8"))
     if not jwt_payload :
         return request_failed(2,"Invalid or expired JWT",401)
-    body = json.load(req.body.decode("utf-8"))
-    user_id= require(body,"user_id","string",err_msg="Missing or error type of [userName]")
+
+    user_id = require(body,"user_id","string",err_msg="Missing or error type of [userName]")
+    message = require(body,"message","string",err_msg="Missing or error type of [message]") 
     user_ = User.objects.get(id=user_id)
-    session = ChatSession.objects.get(user=user_)
+    try:
+        session = ChatSession.objects.get(user=user_)
+    except:
+        session = ChatSession.objects.create(user=user_)
+        session.save()
     messages = session.messages.order_by("timestamp")
+    if not messages.exists():
+        ms = ChatMessage.objects.create(session=session,
+                                   role="system",
+                                   content="You are a friendly and knowledgeable reservation system AI agent. Your job is to help users find restaurants, check table availability, and make reservations smoothly.\
+                                            Here are some restaurants you know about:\
+                                            The Olive Gardenia is a cozy Mediterranean bistro open from 11 AM to 10 PM. They offer fresh pastas, grilled seafood, and a wide range of wines. Currently, they have 4 tables for 2 people, 3 tables for 4 people, and 1 table for groups available. Popular dishes include Grilled Octopus, Lamb Kofta, Seafood Risotto, and Baklava. The restaurant is located at 12 Olive St., Riverside District. Contact number: +1-555-123-4567.\" \
+                                            Sakura Sushi Bar is an authentic Japanese sushi spot open from noon to 11 PM. They have 6 tables for 2 people, 2 tables for 4 people, and no group tables free right now. Highlights include Dragon Roll, Salmon Nigiri, Miso Soup, and Tempura. Located at 48 Sakura Ave., Downtown. Contact: +1-555-987-6543.\" \
+                                            Bella Pasta serves classic Italian dishes with homemade pasta and sauces. Open 10:30 AM to 9:30 PM, they have 3 tables for 2 people, 4 tables for 4, and 2 group tables free. Try their Spaghetti Carbonara, Lasagna, Tiramisu, and Bruschetta. Located at 22 Via Roma, Old Town. Phone: +1-555-321-7890.\
+                                            Spice Route is a vibrant Indian restaurant open 11 AM to 10:30 PM. They offer rich curries, tandoori dishes, and vegetarian options, with 5 tables for 2 people, 3 tables for 4, and 1 group table available. Popular dishes include Butter Chicken, Paneer Tikka, Naan Bread, and Samosa. Located at 7 Spice Rd., Market Square. Contact: +1-555-456-1234.\
+                                            Green Garden Vegan specializes in fresh, organic vegan food. Open 9 AM to 8 PM, they have 4 tables for 2 people and 2 tables for 4 available now. Recommended dishes are Quinoa Salad, Tofu Stir-fry, Vegan Burger, and Smoothie Bowl. Found at 15 Greenway Blvd., West End. Phone: +1-555-654-3210.")
+        ms.save()
     messages_asst = []
+    if len(message) > 0:
+        ms2 = ChatMessage.objects.create(session=session,
+                                role="user",
+                                content=message)
+        ms2.save()
+    session = ChatSession.objects.get(user=user_)
+    session.messages.create()
+    messages = session.messages.order_by("timestamp")
     for msg in messages:
         dct = {}
+        if msg.role == "":
+            continue
         dct["role"] = msg.role
         dct["content"] = msg.content
         messages_asst.append(dct)
+    print(messages_asst)
+    response = client.chat.completions.create(
+                    model="glm-4-flash",  
+                    messages=messages_asst)
+    ms2 = ChatMessage.objects.create(session=session,
+                                     role = "assistant",
+                                     content = response.choices[0].message.content )
+    ms2.save()
+    return request_success({"reply":response.choices[0].message.content})
+
+    
 
 
     
