@@ -10,6 +10,7 @@ export const DOCS_URL = 'https://phoenixcoded.gitbook.io/saasable ';
 export const BLOCK_PATH = '/blocks';
 export const BUSINESS_PATH = '/sections/business';
 export const CUSTOMER_PATH = '/sections/customer';
+export const RESERVATION_PATH = '/sections/reservation';
 const AUTH_PATH = 'auth';
 
 export const PAGE_PATH = {
