@@ -27,8 +27,10 @@ class User(models.Model):
     
 class ReservationInfo(models.Model):
     id = models.BigAutoField(primary_key=True)
-    name = models.ForeignKey(User,on_delete=models.CASCADE, related_name='res_user')
+    customer = models.ForeignKey(User,on_delete=models.CASCADE, related_name='res_user')
     phone = models.CharField(max_length=MAX_CHAR_LENGTH,default="")
+    number_of_ppl = models.CharField(max_length=MAX_CHAR_LENGTH)
+    restuarant_name = models.TextField()
     reservation_time = models.DateTimeField(default=datetime.datetime(1970, 1, 1, tzinfo=timezone.utc))
 
 class ChatSession(models.Model):
@@ -44,6 +46,7 @@ class ChatMessage(models.Model):
     ROLE_CHOICES = (
         ('user', 'User'),
         ('assistant', 'Assistant'),
+        ('system','System')
     )
 
     session = models.ForeignKey(ChatSession, related_name='messages', on_delete=models.CASCADE)
