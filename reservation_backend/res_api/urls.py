@@ -7,5 +7,6 @@ urlpatterns = [
     path('api/verify', views.verify_loggedin),
     path('api/chat/voice',views.voice_message),
     path('api/chat/',views.text_message),
-    path('api/reservation/<int:user_id>',views.reservation_info)
+    path('api/reservation/<int:user_id>',views.reservation_info),
+    path('api/restaurants',views.restaurant_info)
 ]

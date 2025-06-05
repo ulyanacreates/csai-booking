@@ -1,7 +1,7 @@
 from django.shortcuts import render
 import json
 from django.http import HttpRequest, HttpResponse
-from res_api.models import User, ChatMessage,ChatSession,ReservationInfo
+from res_api.models import User, ChatMessage,ChatSession,ReservationInfo, Restaurant
 from .utils.utils_request import BAD_METHOD, request_failed, request_success, return_field,generate_qr_base64
 from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require
 from .utils.utils_time import get_timestamp
@@ -9,6 +9,7 @@ from .utils.utils_jwt import generate_jwt_token, check_jwt_token
 from django.contrib.auth.hashers import make_password, check_password
 import re
 from zhipuai import ZhipuAI
+from datetime import date
 # Create your views here.
 
 api_key = "76ed5713b6c24a678ba16e6c4f751645.uhWJabToEluWbLJt"
@@ -122,16 +123,26 @@ def text_message(req:HttpRequest):
         session.save()
     messages = session.messages.order_by("timestamp")
     if not messages.exists():
+        rests = Restaurant.objects.all()
+        data = ""
+        for rest in rests:
+            print(rest.menu)
+            menu = rest.menu
+            tables = rest.tables
+            # for mn in rest.menu:
+            #     menu += mn+","
+            # for tb in rest.tables:
+            #     tables += tb+","
+            data += "Name: {},Address: {},Description: {},Working hours: {},Contact Number: {},Menu: {},Tables: {}\n".format(rest.name,rest.address,rest.description,rest.working_hours,rest.contact_number,menu,tables)
+        print(data)
         ms = ChatMessage.objects.create(session=session,
                                    role="system",
-                                   content="You are a friendly and knowledgeable reservation system AI agent. Your job is to help users find restaurants, check table availability, and make reservations smoothly.\
-                                            Here are some restaurants you know about:\
-                                            The Olive Gardenia is a cozy Mediterranean bistro open from 11 AM to 10 PM. They offer fresh pastas, grilled seafood, and a wide range of wines. Currently, they have 4 tables for 2 people, 3 tables for 4 people, and 1 table for groups available. Popular dishes include Grilled Octopus, Lamb Kofta, Seafood Risotto, and Baklava. The restaurant is located at 12 Olive St., Riverside District. Contact number: +1-555-123-4567.\" \
-                                            Sakura Sushi Bar is an authentic Japanese sushi spot open from noon to 11 PM. They have 6 tables for 2 people, 2 tables for 4 people, and no group tables free right now. Highlights include Dragon Roll, Salmon Nigiri, Miso Soup, and Tempura. Located at 48 Sakura Ave., Downtown. Contact: +1-555-987-6543.\" \
-                                            Bella Pasta serves classic Italian dishes with homemade pasta and sauces. Open 10:30 AM to 9:30 PM, they have 3 tables for 2 people, 4 tables for 4, and 2 group tables free. Try their Spaghetti Carbonara, Lasagna, Tiramisu, and Bruschetta. Located at 22 Via Roma, Old Town. Phone: +1-555-321-7890.\
-                                            Spice Route is a vibrant Indian restaurant open 11 AM to 10:30 PM. They offer rich curries, tandoori dishes, and vegetarian options, with 5 tables for 2 people, 3 tables for 4, and 1 group table available. Popular dishes include Butter Chicken, Paneer Tikka, Naan Bread, and Samosa. Located at 7 Spice Rd., Market Square. Contact: +1-555-456-1234.\
-                                            Green Garden Vegan specializes in fresh, organic vegan food. Open 9 AM to 8 PM, they have 4 tables for 2 people and 2 tables for 4 available now. Recommended dishes are Quinoa Salad, Tofu Stir-fry, Vegan Burger, and Smoothie Bowl. Found at 15 Greenway Blvd., West End. Phone: +1-555-654-3210. \
-                                            NOTE: When a reservation is confirmed, respond with a clear confirmation message to the user and include a valid JSON object with the reservation details (restaurant_name: name of restaurant,phone:user_phone_number (you should ask this info if not provided), number_of_ppl (you should ask this info if not provided): number_of_people, reservation_time:reservation_time) for system processing, do not include any information (Here's the reservation detail in JSON format:) about JSON file in user response, just put that json code block in the end of response. Place the JSON in a code block if needed.")
+                                   content=f"You are a friendly and knowledgeable reservation system AI agent. Your job is to help users find restaurants, check table availability, and make reservations smoothly.\
+                                            Here are restaurants in the current database {data} :\
+                                            And todays date{date.today()}\
+                                            Do not hurry, Wait untill users askes for reservation, and also provide the restaurnats info based on the provided data \
+                                            Also pls check working time and user reservation time when user provides  \
+                                            NOTE: When a reservation is confirmed, respond with a clear confirmation message to the user and include a valid JSON object with the reservation details: {{restaurant_name: name of restaurant,phone:user_phone_number (you should ask this info if not provided), number_of_ppl: number_of_people (you should ask this info if not provided), reservation_time:reservation_time}},NOTE this is very important, For system processing, do not include any information (like Here's the reservation detail in JSON format:) about JSON file in user response, just put that json code block in the end of response. Place the JSON in a code block if needed.")
         ms.save()
     messages_asst = []
     if len(message) > 0:
@@ -159,8 +170,8 @@ def text_message(req:HttpRequest):
         res_info = json.loads(match_.group(0))
         txt = txt.replace(match_.group(0), '').strip()
         print(res_info)
-        reservation = ReservationInfo.objects.create(customer=user_,phone=res_info["user_phone_number"],
-                                                     number_of_ppl=res_info["number_of_people"],reservation_time=res_info["reservation_time"],
+        reservation = ReservationInfo.objects.create(customer=user_,phone=res_info["phone"],
+                                                     number_of_ppl=res_info["number_of_ppl"],reservation_time=res_info["reservation_time"],
                                                      restuarant_name=res_info["restaurant_name"])
         reservation.save()
         print("Saved in database")
@@ -183,7 +194,6 @@ def reservation_info(req: HttpRequest,user_id:any):
     response = []
     for obj in objects:
         dct = {}
-
         dct["rest"] = obj.restuarant_name
         dct["res_time"] = obj.reservation_time
         dct["num"] = obj.number_of_ppl
@@ -192,7 +202,26 @@ def reservation_info(req: HttpRequest,user_id:any):
         qr_image = generate_qr_base64(qr_content)
         dct["img"] = qr_image
         response.append(dct)
-    return request_success({"data":response})       
+    return request_success({"data":response})      
+
+
+def restaurant_info(req: HttpRequest):
+    if req.method != "GET":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    rest = Restaurant.objects.all()
+    data = []
+    for rs in rest:
+        d = {}
+        d["name"] = rs.name
+        d["descp"] = rs.description
+        d["image_url"] = rs.image_url
+        d["address"] = rs.address
+        data.append(d)
+    return request_success({"rests":data})  
 
 
 
