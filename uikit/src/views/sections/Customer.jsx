@@ -32,8 +32,14 @@ export default function Customer() {
   const [messages, setMessages] = useState([]); 
   const messagesEndRef = useRef(null);
   useEffect(() => {
-    axios.get(API_URL + '/api/restaurants')
-      .then((res) => setRestaurants(res.data))
+    let user =  JSON.parse(localStorage.getItem('user'))
+    axios.get(API_URL + '/api/restaurants',{
+        headers: {
+          Authorization: `${user.token}`,
+        },
+      })
+      .then((res) => {setRestaurants(res.data.rests);
+         console.log(res.data);})
       .catch((err) => console.error(err));
   }, []);
 useEffect(() => {
@@ -84,17 +90,21 @@ useEffect(() => {
       <Grid container spacing={3}>
         {restaurants.map((res) => (
           <Grid item xs={12} sm={6} md={4} key={res.id}>
-            <Card>
+            <Card sx={{      maxWidth: 345,
+      height: 500,
+      display: 'flex',
+      flexDirection: 'column',
+      margin: 'auto',}}>
               <CardMedia
                 component="img"
-                height="160"
-                image={res.image || '/placeholder.jpg'}
+                height="200"
+                image={res.image_url || '/placeholder.jpg'}
                 alt={res.name}
               />
               <CardContent>
                 <Typography variant="h6">{res.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {res.description || 'No description available.'}
+                  {res.descp || 'No description available.'}
                 </Typography>
               </CardContent>
             </Card>

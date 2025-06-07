@@ -3,7 +3,7 @@ const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://vercel.live https://va.vercel-scripts.com https://*.clarity.ms https://phpstack-207002-5085356.cloudwaysapps.com;
     style-src 'self' 'unsafe-inline' https://phpstack-207002-5085356.cloudwaysapps.com https://fonts.googleapis.com;
-    img-src 'self' blob: data: https://www.googletagmanager.com https://flagcdn.com https://*.openstreetmap.org https://*.clarity.ms https://*.bing.com https://phpstack-207002-5085356.cloudwaysapps.com;
+    img-src 'self' blob: data: https://www.googletagmanager.com https://flagcdn.com https://*.openstreetmap.org https://*.clarity.ms https://*.bing.com https://phpstack-207002-5085356.cloudwaysapps.com https://axwwgrkdco.cloudimg.io https://dynamic-media-cdn.tripadvisor.com https://rachelgouk.com https://www.thebeijinger.com;
     font-src 'self' https://*.gstatic.com;
     object-src 'self';
     base-uri 'self';

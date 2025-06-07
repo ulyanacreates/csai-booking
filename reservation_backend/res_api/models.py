@@ -56,3 +56,18 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"[{self.timestamp}] {self.role}: {self.content[:50]}"
+
+class Restaurant(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    description = models.TextField()
+    working_hours = models.CharField(max_length=255)
+    contact_number = models.CharField(max_length=50)
+    image_url = models.URLField(blank=True, null=True)
+
+    menu = models.TextField()
+
+    tables = models.TextField()
+
+    def __str__(self):
+        return self.name
