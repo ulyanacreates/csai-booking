@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -11,13 +12,19 @@ import ListItemText from '@mui/material/ListItemText';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField'; // Added TextField
-import IconButton from '@mui/material/IconButton'; // Added IconButton
-import EditIcon from '@mui/icons-material/Edit'; // Added EditIcon
-import SaveIcon from '@mui/icons-material/Save'; // Added SaveIcon
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'; // Added AddIcon
-import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart'; // For Sold Out
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'; // For Available
+import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
 
@@ -25,32 +32,7 @@ import { useTheme } from '@mui/material/styles';
 import useDataThemeMode from '@/hooks/useDataThemeMode';
 import { GraphicsCard } from '@/components/cards';
 
-// ... (dummyReservations, sortedReservations, dummyFloorplanItems remain the same)
-// Dummy reservation data
-const dummyReservations = [
-  { id: 1, name: 'Alice Wonderland', tableNumber: 5, time: '18:30', numberOfPeople: 2 },
-  { id: 2, name: 'Bob The Builder', tableNumber: 2, time: '19:00', numberOfPeople: 4 },
-  { id: 3, name: 'Charlie Brown', tableNumber: 8, time: '17:00', numberOfPeople: 3 },
-  { id: 4, name: 'Diana Prince', tableNumber: 3, time: '20:15', numberOfPeople: 2 },
-  { id: 5, name: 'Edward Scissorhands', tableNumber: 1, time: '18:00', numberOfPeople: 1 },
-  { id: 6, name: 'Fiona Gallagher', tableNumber: 6, time: '19:30', numberOfPeople: 5 },
-  { id: 7, name: 'George Costanza', tableNumber: 4, time: '20:00', numberOfPeople: 2 },
-  { id: 8, name: 'Harry Potter', tableNumber: 7, time: '17:30', numberOfPeople: 6 },
-  { id: 9, name: 'Indiana Jones', tableNumber: 9, time: '21:00', numberOfPeople: 3 },
-  { id: 10, name: 'Jack Sparrow', tableNumber: 10, time: '18:45', numberOfPeople: 4 },
-  { id: 11, name: 'Kevin McCallister', tableNumber: 11, time: '16:00', numberOfPeople: 8 },
-  { id: 12, name: 'Luna Lovegood', tableNumber: 12, time: '21:30', numberOfPeople: 2 },
-];
-
-// Sort reservations by time
-const sortedReservations = [...dummyReservations].sort((a, b) => {
-  const timeA = a.time.split(':').map(Number);
-  const timeB = b.time.split(':').map(Number);
-  if (timeA[0] !== timeB[0]) {
-    return timeA[0] - timeB[0];
-  }
-  return timeA[1] - timeB[1];
-});
+const API_URL = "http://localhost:8000";
 
 // Dummy data for floorplan list
 const dummyFloorplanItems = [
@@ -61,29 +43,119 @@ const dummyFloorplanItems = [
   { id: 'p1', name: 'Patio Seat 5', status: 'Available', capacity: 2 },
 ];
 
-// Dummy data for menu items
-const initialMenuItems = [
-  { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
-  { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
-  { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
-];
-
-
 export default function Business() {
   useDataThemeMode();
   const theme = useTheme();
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
-  const [menuItems, setMenuItems] = useState(initialMenuItems);
+  const [reservations, setReservations] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [openRestaurantNameModal, setOpenRestaurantNameModal] = useState(false);
+  const [restaurantName, setRestaurantName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.title = 'Business View | AI Customer Service';
+    
+    // Check for first login flag
+    const firstLogin = localStorage.getItem('isFirstLogin');
+    if (firstLogin === 'true') {
+      setOpenRestaurantNameModal(true);
+    }
+
+    // Load business data
+    loadBusinessData();
   }, []);
+
+  const loadBusinessData = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.token) {
+        console.error("User data or token not found in localStorage.");
+        setLoading(false);
+        return;
+      }
+
+      const headers = {
+        Authorization: `${user.token}`,
+      };
+
+      // Load reservations for a specific restaurant
+      // You'll need to determine which restaurant this business user manages
+      // For now, I'll use a placeholder - you might want to store this in user data
+      const restaurantName = user.restaurant_name || "The Eight"; // Replace with actual restaurant name
+      
+      try {
+        const reservationsResponse = await axios.get(`${API_URL}/api/restaurant/reservations/${encodeURIComponent(restaurantName)}`, { headers });
+        console.log('Restaurant Reservations Response:', reservationsResponse.data);
+        
+        if (reservationsResponse.data && Array.isArray(reservationsResponse.data.data)) {
+          const processedReservations = reservationsResponse.data.data.map((reservation, index) => ({
+            ...reservation,
+            id: reservation.customer_id || `reservation-${index}-${Date.now()}`,
+            name: reservation.customer_name,
+            time: new Date(reservation.res_time).toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            }),
+            numberOfPeople: reservation.num,
+            tableNumber: `T${index + 1}` // You might want to add actual table assignment logic
+          }));
+          // Sort reservations by time
+          const sortedReservations = processedReservations.sort((a, b) => {
+            return new Date(a.res_time) - new Date(b.res_time);
+          });
+          
+          setReservations(sortedReservations);
+        } else {
+          console.warn('No reservations data found for restaurant');
+          setReservations([]);
+        }
+      } catch (reservationsError) {
+        console.error("Error fetching restaurant reservations:", reservationsError);
+        setReservations([]);
+      }
+
+      // Load menu items
+      try {
+        const menuResponse = await axios.get(`${API_URL}/api/menu`, { headers });
+        console.log('Menu Response:', menuResponse.data);
+        
+        if (menuResponse.data && Array.isArray(menuResponse.data.menu)) {
+          const processedMenuItems = menuResponse.data.menu.map((item, index) => ({
+            ...item,
+            id: item.id || `menu-${index}-${Date.now()}`,
+            isEditing: false
+          }));
+          setMenuItems(processedMenuItems);
+        } else {
+          console.warn('No menu data found, using fallback');
+          setMenuItems([
+            { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
+            { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
+            { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
+          ]);
+        }
+      } catch (menuError) {
+        console.error("Error fetching menu:", menuError);
+        setMenuItems([
+          { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
+          { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
+          { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
+        ]);
+      }
+
+    } catch (error) {
+      console.error("Error loading business data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const listItemApproxHeight = 60; 
   const maxListHeight = listItemApproxHeight * 5.5;
   const floorplanListMaxHeight = listItemApproxHeight * 4.5; 
   const menuListMaxHeight = listItemApproxHeight * 6;
-
 
   const handleMenuItemChange = (id, field, value) => {
     setMenuItems(prevItems =>
@@ -93,7 +165,32 @@ export default function Business() {
     );
   };
 
-  const toggleEditMenuItem = (id) => {
+  const toggleEditMenuItem = async (id) => {
+    const item = menuItems.find(item => item.id === id);
+    
+    if (item.isEditing) {
+      // Save the item
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const headers = {
+          Authorization: `${user.token}`,
+        };
+
+        const payload = {
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category: item.category,
+          isSoldOut: item.isSoldOut || false
+        };
+
+        await axios.put(`${API_URL}/api/menu/${id}`, payload, { headers });
+        console.log('Menu item updated successfully');
+      } catch (error) {
+        console.error('Error updating menu item:', error);
+      }
+    }
+
     setMenuItems(prevItems =>
       prevItems.map(item =>
         item.id === id ? { ...item, isEditing: !item.isEditing } : item
@@ -101,32 +198,152 @@ export default function Business() {
     );
   };
   
-  const addNewMenuItem = () => {
-    const newItemId = `m${menuItems.length + 1 + Date.now()}`; // Simple unique ID
-    setMenuItems(prevItems => [
-      ...prevItems,
-      { id: newItemId, name: 'New Item', description: '', price: '0.00', category: 'Uncategorized', isEditing: true }
-    ]);
+  const addNewMenuItem = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const headers = {
+        Authorization: `${user.token}`,
+      };
+
+      const newItem = {
+        name: 'New Item',
+        description: '',
+        price: '0.00',
+        category: 'Uncategorized',
+        isSoldOut: false
+      };
+
+      const response = await axios.post(`${API_URL}/api/menu`, newItem, { headers });
+      console.log('New menu item created:', response.data);
+
+      const newItemId = response.data.id || `m${menuItems.length + 1 + Date.now()}`;
+      setMenuItems(prevItems => [
+        ...prevItems,
+        { ...newItem, id: newItemId, isEditing: true }
+      ]);
+    } catch (error) {
+      console.error('Error creating menu item:', error);
+      // Fallback to local creation
+      const newItemId = `m${menuItems.length + 1 + Date.now()}`;
+      setMenuItems(prevItems => [
+        ...prevItems,
+        { id: newItemId, name: 'New Item', description: '', price: '0.00', category: 'Uncategorized', isEditing: true }
+      ]);
+    }
   };
 
-  const handleDeleteMenuItem = (id) => {
+  const handleDeleteMenuItem = async (id) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const headers = {
+        Authorization: `${user.token}`,
+      };
+
+      await axios.delete(`${API_URL}/api/menu/${id}`, { headers });
+      console.log('Menu item deleted successfully');
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+    }
+
     setMenuItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
-  const toggleSoldOutStatus = (id) => {
+  const toggleSoldOutStatus = async (id) => {
+    const item = menuItems.find(item => item.id === id);
+    const newSoldOutStatus = !item.isSoldOut;
+
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const headers = {
+        Authorization: `${user.token}`,
+      };
+
+      const payload = {
+        ...item,
+        isSoldOut: newSoldOutStatus
+      };
+
+      await axios.put(`${API_URL}/api/menu/${id}`, payload, { headers });
+      console.log('Menu item sold out status updated successfully');
+    } catch (error) {
+      console.error('Error updating sold out status:', error);
+    }
+
     setMenuItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, isSoldOut: !item.isSoldOut } : item
+        item.id === id ? { ...item, isSoldOut: newSoldOutStatus } : item
       )
     );
   };
 
+  const handleRestaurantNameChange = (event) => {
+    setRestaurantName(event.target.value);
+  };
+
+  const handleCloseRestaurantNameModal = () => {
+    setOpenRestaurantNameModal(false);
+    localStorage.removeItem('isFirstLogin');
+    console.log('Restaurant Name Modal Closed. Name (if any):', restaurantName);
+  };
+
+  const handleSaveRestaurantName = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const headers = {
+        Authorization: `${user.token}`,
+      };
+
+      const payload = {
+        restaurantName: restaurantName
+      };
+
+      // await axios.post(`${API_URL}/api/restaurant/setup`, payload, { headers });
+      // console.log('Restaurant name saved successfully:', restaurantName);
+    } catch (error) {
+      console.error('Error saving restaurant name:', error);
+    }
+
+    setOpenRestaurantNameModal(false);
+    localStorage.removeItem('isFirstLogin');
+  };
+
+  if (loading) {
+    return (
+      <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>
+        <Container>
+          <Typography variant="h4" align="center">Loading...</Typography>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>
       <Container>
+        <Dialog open={openRestaurantNameModal} onClose={handleCloseRestaurantNameModal}>
+          <DialogTitle>Enter Restaurant Name</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{mb: 2}}>
+              Welcome! Please enter the name of your restaurant to get started.
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="restaurant-name"
+              label="Restaurant Name"
+              type="text"
+              fullWidth
+              variant="standard"
+              value={restaurantName}
+              onChange={handleRestaurantNameChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleSaveRestaurantName}>Save</Button>
+          </DialogActions>
+        </Dialog>
+
         <Stack spacing={4}>
-          {/* ... (Existing Typography and Grid for Reservations/Floorplan) ... */}
           <Grid container spacing={3} justifyContent="space-between"> 
             {/* Reservations List Section */}
             <Grid item xs={12} md={7}>
@@ -163,7 +380,7 @@ export default function Business() {
                       flexGrow: 1, 
                     }}
                   >
-                    {sortedReservations.map((reservation, index) => (
+                    {reservations.length > 0 ? reservations.map((reservation, index) => (
                       <ListItem key={reservation.id} disablePadding 
                         sx={{ 
                           borderBottom: `1px solid ${theme.palette.divider}`,
@@ -171,13 +388,20 @@ export default function Business() {
                         }}
                       >
                         <ListItemText
-                          primary={`${index + 1}. ${reservation.name} - Table ${reservation.tableNumber}`}
-                          secondary={`Time: ${reservation.time} - Guests: ${reservation.numberOfPeople}`}
+                          primary={`${index + 1}. ${reservation.name || reservation.customerName} - Table ${reservation.tableNumber || reservation.table_number}`}
+                          secondary={`Time: ${reservation.time} - Guests: ${reservation.numberOfPeople || reservation.party_size}`}
                           primaryTypographyProps={{ color: theme.palette.text.primary, fontWeight: 'medium' }}
                           secondaryTypographyProps={{ color: theme.palette.text.secondary }}
                         />
                       </ListItem>
-                    ))}
+                    )) : (
+                      <ListItem>
+                        <ListItemText
+                          primary="No reservations for today"
+                          primaryTypographyProps={{ color: theme.palette.text.secondary, textAlign: 'center' }}
+                        />
+                      </ListItem>
+                    )}
                   </List>
                 </GraphicsCard>
               </motion.div>
@@ -290,7 +514,7 @@ export default function Business() {
             </Grid>
           </Grid>
           
-          <Divider sx={{ my: 4 }} /> {/* Ensure some margin around divider */}
+          <Divider sx={{ my: 4 }} />
 
           {/* Menu Details Section */}
           <motion.div
@@ -419,7 +643,6 @@ export default function Business() {
               </Stack>
             </GraphicsCard>
           </motion.div>
-          
         </Stack>
       </Container>
     </Box>
