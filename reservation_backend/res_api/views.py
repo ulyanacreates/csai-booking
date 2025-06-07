@@ -224,6 +224,38 @@ def restaurant_info(req: HttpRequest):
     return request_success({"rests":data})  
 
 
+def restaurant_reservations(req: HttpRequest, restaurant_name: str):
+    if req.method != "GET":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    
+    # Decode the restaurant name in case it has URL encoding
+    import urllib.parse
+    restaurant_name = urllib.parse.unquote(restaurant_name)
+    
+    # Get all reservations for this restaurant
+    reservations = ReservationInfo.objects.filter(restuarant_name=restaurant_name)
+    response = []
+
+    for reservation in reservations:
+        dct = {}
+        dct["rest"] = reservation.restuarant_name
+        dct["res_time"] = reservation.reservation_time
+        dct["num"] = reservation.number_of_ppl
+        dct["phone"] = reservation.phone
+        dct["customer_name"] = reservation.customer.name  # Get customer name
+        dct["customer_id"] = reservation.customer.id
+        
+        # Generate QR code for the reservation
+        qr_content = f"Restaurant: {dct['rest']}\nTime: {dct['res_time']}\nPeople: {dct['num']}\nPhone: {dct['phone']}\nCustomer: {dct['customer_name']}"
+        qr_image = generate_qr_base64(qr_content)
+        dct["img"] = qr_image
+        response.append(dct)
+    
+    return request_success({"data": response, "restaurant_name": restaurant_name, "total_reservations": len(response)})
 
 
 

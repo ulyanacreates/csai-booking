@@ -31,7 +31,7 @@ class ReservationInfo(models.Model):
     phone = models.CharField(max_length=MAX_CHAR_LENGTH,default="")
     number_of_ppl = models.CharField(max_length=MAX_CHAR_LENGTH)
     restuarant_name = models.TextField()
-    reservation_time = models.DateTimeField(default=datetime.datetime(1970, 1, 1, tzinfo=timezone.utc))
+    reservation_time = models.DateTimeField(default=datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc))
 
 class ChatSession(models.Model):
     id = models.BigAutoField(primary_key=True)

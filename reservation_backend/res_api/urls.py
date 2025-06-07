@@ -8,5 +8,6 @@ urlpatterns = [
     path('api/chat/voice',views.voice_message),
     path('api/chat/',views.text_message),
     path('api/reservation/<int:user_id>',views.reservation_info),
+    path('api/restaurant/reservations/<str:restaurant_name>',views.restaurant_reservations),
     path('api/restaurants',views.restaurant_info)
 ]
