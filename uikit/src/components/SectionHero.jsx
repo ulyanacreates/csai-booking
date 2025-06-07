@@ -122,7 +122,7 @@ export default function SectionHero({ heading, search = true, offer = false, bre
               sx={{ bgcolor: 'grey.100', '& .MuiChip-label': { py: 0.5, px: 1.5 } }}
             />
           )}
-          {offer && (
+          {/* {offer && (
             <Chip
               variant="outlined"
               label={
@@ -156,7 +156,7 @@ export default function SectionHero({ heading, search = true, offer = false, bre
               }
               sx={{ bgcolor: 'grey.100', '& .MuiChip-label': { py: 0.5, px: 1.5 } }}
             />
-          )}
+          )} */}
           <Typography variant="h1" sx={{ textAlign: 'center', width: { xs: 345, sm: 550, md: 700 } }}>
             {heading}
           </Typography>

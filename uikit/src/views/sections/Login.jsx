@@ -33,7 +33,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (mode === 'signup' && password !== confirm) {
-    setError('Passwords do not match');
+    setError('Passwords format does not match');
     return;
   }
 
