@@ -10,9 +10,12 @@ from django.contrib.auth.hashers import make_password, check_password
 import re
 from zhipuai import ZhipuAI
 from datetime import date
+import os
+from dotenv import load_dotenv
 # Create your views here.
 
-api_key = "76ed5713b6c24a678ba16e6c4f751645.uhWJabToEluWbLJt"
+load_dotenv(".env")
+api_key = os.getenv("API_KEY")
 client = ZhipuAI(api_key=api_key)
 
 @CheckRequire
@@ -76,7 +79,8 @@ def register(req: HttpRequest):
     token = generate_jwt_token(username_)
     return request_success({"token": token,
                             "user_name": username_,
-                            "user_id":user_.id})
+                            "user_id":user_.id,
+                            "user_type":user_.user_type})
 
 def verify_loggedin(req: HttpRequest):
     if req.method != "POST":
@@ -151,9 +155,10 @@ def text_message(req:HttpRequest):
                                             3. Always check if the requested reservation time is within the restaurant’s working hours from the database.
                                             4. When confirming the reservation, respond naturally (e.g., “Great! Your reservation is confirmed.”), then **at the very end**, include a valid JSON object like this:
                                             ```json
-                                            {{"restaurant_name": "string", "phone": "string", "number_of_ppl": int, "reservation_time": "YYYY-MM-DD HH:MM"}}""")
+                                            {{"restaurant_name": "", "phone": "", "number_of_ppl":, "reservation_time": "YYYY-MM-DD HH:MM"}}\
+                                            **NO NEED TO INCLUDE** words "Here is the confirmation in JSON format before json file" and so on""")
                                                     
-    ms.save()
+        ms.save()
     messages_asst = []
     if len(message) > 0:
         ms2 = ChatMessage.objects.create(session=session,
@@ -185,6 +190,8 @@ def text_message(req:HttpRequest):
                                                      restuarant_name=res_info["restaurant_name"])
         reservation.save()
         print("Saved in database")
+    txt = re.sub(r'Here is the confirmation in JSON format:\s*```json\s*```', '', txt).strip()
+
     ms2 = ChatMessage.objects.create(session=session,
                                      role = "assistant",
                                      content = txt )
@@ -226,7 +233,6 @@ def chat_info(req: HttpRequest,user_id:any):
     session = ChatSession.objects.get(user=user_)
     session.messages.create()
     messages = session.messages.order_by("timestamp")
-    print(jwt_payload)
     response = []
     for msg in messages:
         dct = {}
@@ -253,4 +259,43 @@ def restaurant_info(req: HttpRequest):
         d["image_url"] = rs.image_url
         d["address"] = rs.address
         data.append(d)
-    return request_success({"rests":data}) 
+    return request_success({"rests":data})  
+
+
+def restaurant_reservations(req: HttpRequest, restaurant_name: str):
+    if req.method != "GET":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    
+    import urllib.parse
+    restaurant_name = urllib.parse.unquote(restaurant_name)
+    
+    reservations = ReservationInfo.objects.filter(restuarant_name=restaurant_name)
+    response = []
+
+    for reservation in reservations:
+        dct = {}
+        dct["rest"] = reservation.restuarant_name
+        dct["res_time"] = reservation.reservation_time
+        dct["num"] = reservation.number_of_ppl
+        dct["phone"] = reservation.phone
+        dct["customer_name"] = reservation.customer.name  # Get customer name
+        dct["customer_id"] = reservation.customer.id
+        
+        qr_content = f"Restaurant: {dct['rest']}\nTime: {dct['res_time']}\nPeople: {dct['num']}\nPhone: {dct['phone']}\nCustomer: {dct['customer_name']}"
+        qr_image = generate_qr_base64(qr_content)
+        dct["img"] = qr_image
+        response.append(dct)
+    
+    return request_success({"data": response, "restaurant_name": restaurant_name, "total_reservations": len(response)})
+
+
+
+    
+
+
+    
+

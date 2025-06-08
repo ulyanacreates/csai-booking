@@ -34,19 +34,23 @@ export const getNavbar = () => {
     : null,
 
     primaryBtn: user
-      ? { children: 'Logout', href: PAGE_PATH.login, onClick: () => { localStorage.removeItem('user'); location.reload(); router.push("/")} }
+      ? { children: 'Logout', href: PAGE_PATH.login, onClick: () => { localStorage.removeItem('user'); router.push("/")} }
       : { children: 'Log in', href: PAGE_PATH.login },
     navItems: user 
-      ? [ { id: 'home', title: 'Home', link: '/' },
+      ? user.user_type === "customer"
+        ? [ { id: 'home', title: 'Home', link: '/' },
           { id: 'components', title: 'Make a Reservation', link: CUSTOMER_PATH },
           { id: 'components', title: "Previous Reservations", link: RESERVATION_PATH},
         ]
+        : [
+            { id: 'home', title: 'Home', link: '/' },
+            { id: 'components', title: 'Business View', link: BUSINESS_PATH },
+          ]
       : [
           { id: 'home', title: 'Home', link: '/' },
           // landingMegamenu,
           // { id: 'components', title: 'User-Side Preview', link: CUSTOMER_PATH },
           // { id: 'dashboard', title: 'Dashboard', link: ADMIN_PATH, ...linkProps },
-          { id: 'components', title: 'Business View', link: BUSINESS_PATH },
           // pagesMegamenu,
           { id: 'docs', title: 'Docs', link: DOCS_URL, ...linkProps, icon: 'tabler-pin-invoke' }
         ],

@@ -73,29 +73,13 @@ export default function AuthPage() {
       const data = await response.json();
       localStorage.setItem("user", JSON.stringify(data));
 
-      // Handle redirection based on user type
       if (mode === 'signup') {
-        // For signup, use the userType from the form
         if (userType === 'company') {
-          localStorage.setItem('isFirstLogin', 'true'); // Set flag for first login popup
-          router.push(BUSINESS_PATH);
-        } else if (userType === 'customer') {
-          router.push(CUSTOMER_PATH);
-        } else {
-          // Fallback
-          router.push('/');
+          localStorage.setItem('isFirstLogin', 'false'); 
         }
+        router.push('/')
       } else {
-        // For login, use the user_type from the server response
-        if (data.user_type === 'company') {
-          router.push(BUSINESS_PATH);
-        } else if (data.user_type === 'customer') {
-          router.push(CUSTOMER_PATH);
-        } else {
-          // Fallback if user_type is not properly set
-          console.warn('User type not found in response, redirecting to home');
           router.push('/');
-        }
       }
 
     } catch (err) {

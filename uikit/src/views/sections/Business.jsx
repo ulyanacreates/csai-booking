@@ -79,10 +79,7 @@ export default function Business() {
         Authorization: `${user.token}`,
       };
 
-      // Load reservations for a specific restaurant
-      // You'll need to determine which restaurant this business user manages
-      // For now, I'll use a placeholder - you might want to store this in user data
-      const restaurantName = user.restaurant_name || "The Eight"; // Replace with actual restaurant name
+      const restaurantName = user.user_name;
       
       try {
         const reservationsResponse = await axios.get(`${API_URL}/api/restaurant/reservations/${encodeURIComponent(restaurantName)}`, { headers });
@@ -93,15 +90,11 @@ export default function Business() {
             ...reservation,
             id: reservation.customer_id || `reservation-${index}-${Date.now()}`,
             name: reservation.customer_name,
-            time: new Date(reservation.res_time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            }),
+            time: reservation.res_time,
             numberOfPeople: reservation.num,
-            tableNumber: `T${index + 1}` // You might want to add actual table assignment logic
+            tableNumber: `T${index + 1}`
           }));
-          // Sort reservations by time
+
           const sortedReservations = processedReservations.sort((a, b) => {
             return new Date(a.res_time) - new Date(b.res_time);
           });
