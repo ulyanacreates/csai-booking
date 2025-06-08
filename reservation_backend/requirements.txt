@@ -1,3 +1,4 @@
+dotenv
 annotated-types
 anyio
 asgiref
