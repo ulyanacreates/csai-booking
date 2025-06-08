@@ -62,7 +62,24 @@ export default function Customer() {
       })
       .catch((err) => console.error(err));
   }, []);
+    useEffect(() => {
+    let user = JSON.parse(localStorage.getItem('user'));
 
+    if (user && user.user_id && user.token) {
+      axios.get(`${API_URL}/api/messages/${user.user_id}`, {
+        headers: {
+          Authorization: `${user.token}`,
+        },
+      })
+      .then(res => {
+        const history = res.data.messages || [];
+        setMessages(history);
+      })
+      .catch(err => {
+        console.error('Failed to load message history:', err);
+      });
+    }
+  }, []);
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });

@@ -34,7 +34,7 @@ export const getNavbar = () => {
     : null,
 
     primaryBtn: user
-      ? { children: 'Logout', href: '#', onClick: () => { localStorage.removeItem('user'); location.reload(); } }
+      ? { children: 'Logout', href: PAGE_PATH.login, onClick: () => { localStorage.removeItem('user'); location.reload(); router.push("/")} }
       : { children: 'Log in', href: PAGE_PATH.login },
     navItems: user 
       ? [ { id: 'home', title: 'Home', link: '/' },
@@ -43,11 +43,11 @@ export const getNavbar = () => {
         ]
       : [
           { id: 'home', title: 'Home', link: '/' },
-          landingMegamenu,
-          { id: 'components', title: 'User-Side Preview', link: CUSTOMER_PATH },
+          // landingMegamenu,
+          // { id: 'components', title: 'User-Side Preview', link: CUSTOMER_PATH },
           // { id: 'dashboard', title: 'Dashboard', link: ADMIN_PATH, ...linkProps },
           { id: 'components', title: 'Business View', link: BUSINESS_PATH },
-          pagesMegamenu,
+          // pagesMegamenu,
           { id: 'docs', title: 'Docs', link: DOCS_URL, ...linkProps, icon: 'tabler-pin-invoke' }
         ],
   };
