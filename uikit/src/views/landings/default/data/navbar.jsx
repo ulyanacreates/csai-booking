@@ -35,7 +35,7 @@ export const getNavbar = () => {
     : null,
 
     primaryBtn: user
-      ? { children: 'Logout', href: '#', onClick: () => { localStorage.removeItem('user'); location.reload(); } }
+      ? { children: 'Logout', href: PAGE_PATH.login, onClick: () => { localStorage.removeItem('user'); router.push("/")} }
       : { children: 'Log in', href: PAGE_PATH.login },
     navItems: user.user_type === 'customer'
       ? [ { id: 'home', title: 'Home', link: '/' },

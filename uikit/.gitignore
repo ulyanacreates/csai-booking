@@ -34,3 +34,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 # next-env.d.js
+*.sqlite3
+db.sqlite3

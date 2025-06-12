@@ -10,9 +10,12 @@ from django.contrib.auth.hashers import make_password, check_password
 import re
 from zhipuai import ZhipuAI
 from datetime import date
+import os
+from dotenv import load_dotenv
 # Create your views here.
 
-api_key = "76ed5713b6c24a678ba16e6c4f751645.uhWJabToEluWbLJt"
+load_dotenv(".env")
+api_key = os.getenv("API_KEY")
 client = ZhipuAI(api_key=api_key)
 
 @CheckRequire
@@ -56,8 +59,6 @@ def register(req: HttpRequest):
     phonnm_ = require(body,"phoneNumber", "string", err_msg="Missing or error type of [phoneNumber]")
     user_type = require(body,"user_type", "string", err_msg="Missing or error type of [user_type]")
     
-    # img_id = require(body,"img_id", "string", err_msg="Missing or error type of [img_id]")
-    
     if (len(username_) == 0 or len(username_) > 20):
         return request_failed(-2,"Bad length of [username]")
     
@@ -99,12 +100,9 @@ def verify_loggedin(req: HttpRequest):
     
 
 def voice_message(req: HttpRequest):
-    # if req.method != "POST":
-    #     return BAD_METHOD
-    # # print(req)
-    # audio_file = req.FILES['audio']
-    # return request_success()
     pass
+
+
 def text_message(req:HttpRequest):
     if req.method != "POST":
         return BAD_METHOD
@@ -130,20 +128,36 @@ def text_message(req:HttpRequest):
             print(rest.menu)
             menu = rest.menu
             tables = rest.tables
-            # for mn in rest.menu:
-            #     menu += mn+","
-            # for tb in rest.tables:
-            #     tables += tb+","
             data += "Name: {},Address: {},Description: {},Working hours: {},Contact Number: {},Menu: {},Tables: {}\n".format(rest.name,rest.address,rest.description,rest.working_hours,rest.contact_number,menu,tables)
         print(data)
         ms = ChatMessage.objects.create(session=session,
                                    role="system",
-                                   content=f"You are a friendly and knowledgeable reservation system AI agent. Your job is to help users find restaurants, check table availability, and make reservations smoothly.\
-                                            Here are restaurants in the current database {data} :\
-                                            And todays date{date.today()}\
-                                            Do not hurry, Wait untill users askes for reservation, and also provide the restaurnats info based on the provided data \
-                                            Also pls check working time and user reservation time when user provides  \
-                                            NOTE: When a reservation is confirmed, respond with a clear confirmation message to the user and include a valid JSON object with the reservation details: {{restaurant_name: name of restaurant,phone:user_phone_number (you should ask this info if not provided), number_of_ppl: number_of_people (you should ask this info if not provided), reservation_time:reservation_time}},NOTE this is very important, For system processing, do not include any information (like Here's the reservation detail in JSON format:) about JSON file in user response, just put that json code block in the end of response. Place the JSON in a code block if needed.")
+                                   content=f"""
+                                            You are a friendly and knowledgeable restaurant reservation AI agent. Your primary job is to help users:
+
+                                            - View restaurant options from the database.
+                                            - Ask relevant follow-up questions only **after the user expresses interest in making a reservation**.
+                                            - Confirm reservations only when all necessary details are available.
+                                            - Provide a confirmation message with a correctly formatted JSON object at the end, with **no extra explanation**.
+
+                                            Here is the restaurant database: {data}  
+                                            Today’s date is: {date.today()}  
+
+                                            Rules you MUST follow strictly:
+
+                                            1. DO NOT initiate a reservation unless the user clearly expresses interest.
+                                            2. When a user wants to make a reservation, always collect these four pieces of information:
+                                            - **Restaurant name**
+                                            - **User phone number**
+                                            - **Number of people**
+                                            - **Reservation date and time (both are required, not just the date)**  
+                                                If user says only “Jan 21”, ask: “What time on Jan 21 would you like the reservation?”
+                                            3. Always check if the requested reservation time is within the restaurant’s working hours from the database.
+                                            4. When confirming the reservation, respond naturally (e.g., “Great! Your reservation is confirmed.”), then **at the very end**, include a valid JSON object like this:
+                                            ```json
+                                            {{"restaurant_name": "", "phone": "", "number_of_ppl":, "reservation_time": "YYYY-MM-DD HH:MM"}}\
+                                            **NO NEED TO INCLUDE** words "Here is the confirmation in JSON format before json file" and so on""")
+                                                    
         ms.save()
     messages_asst = []
     if len(message) > 0:
@@ -176,9 +190,11 @@ def text_message(req:HttpRequest):
                                                      restuarant_name=res_info["restaurant_name"])
         reservation.save()
         print("Saved in database")
+    txt = re.sub(r'Here is the confirmation in JSON format:\s*```json\s*```', '', txt).strip()
+
     ms2 = ChatMessage.objects.create(session=session,
                                      role = "assistant",
-                                     content = response.choices[0].message.content )
+                                     content = txt )
     ms2.save()
     return request_success({"reply":txt})
 
@@ -205,7 +221,28 @@ def reservation_info(req: HttpRequest,user_id:any):
         response.append(dct)
     return request_success({"data":response})      
 
-
+def chat_info(req: HttpRequest,user_id:any):
+    if req.method != "GET":
+        return BAD_METHOD
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload :
+        return request_failed(2,"Invalid or expired JWT",401)
+    
+    user_ = User.objects.get(id=user_id)
+    session = ChatSession.objects.get(user=user_)
+    session.messages.create()
+    messages = session.messages.order_by("timestamp")
+    response = []
+    for msg in messages:
+        dct = {}
+        if msg.role == "" or msg.role == "system":
+            continue
+        dct["from"] =  "bot" if msg.role == "assistant" else "user"
+        dct["text"] = msg.content
+        response.append(dct)
+    return request_success({"messages":response})
+    
 def restaurant_info(req: HttpRequest):
     if req.method != "GET":
         return BAD_METHOD
@@ -233,11 +270,9 @@ def restaurant_reservations(req: HttpRequest, restaurant_name: str):
     if not jwt_payload :
         return request_failed(2,"Invalid or expired JWT",401)
     
-    # Decode the restaurant name in case it has URL encoding
     import urllib.parse
     restaurant_name = urllib.parse.unquote(restaurant_name)
     
-    # Get all reservations for this restaurant
     reservations = ReservationInfo.objects.filter(restuarant_name=restaurant_name)
     response = []
 
@@ -250,7 +285,6 @@ def restaurant_reservations(req: HttpRequest, restaurant_name: str):
         dct["customer_name"] = reservation.customer.name  # Get customer name
         dct["customer_id"] = reservation.customer.id
         
-        # Generate QR code for the reservation
         qr_content = f"Restaurant: {dct['rest']}\nTime: {dct['res_time']}\nPeople: {dct['num']}\nPhone: {dct['phone']}\nCustomer: {dct['customer_name']}"
         qr_image = generate_qr_base64(qr_content)
         dct["img"] = qr_image
