@@ -217,7 +217,7 @@ export default function Hero17({ chip, headLine, captionLine, primaryBtn, videoS
               </motion.div>
             </Stack>
           </Box>
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{
@@ -242,7 +242,7 @@ export default function Hero17({ chip, headLine, captionLine, primaryBtn, videoS
                 <source src={videoSrc} type="video/mp4" />
               </video>
             </GraphicsCard>
-          </motion.div>
+          </motion.div> */}
         </Box>
       </ContainerWrapper>
     </>

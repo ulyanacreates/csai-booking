@@ -42,14 +42,14 @@ export default function Main() {
         offset="200px"
       />
 
-      <LazySection
+      {/* <LazySection
         sections={[
           { importFunc: () => import('@/blocks/feature').then((module) => ({ default: module.Feature18 })), props: feature18 },
           // { importFunc: () => import('@/blocks/feature').then((module) => ({ default: module.Feature21 })), props: feature21 },
           // { importFunc: () => import('@/blocks/cta').then((module) => ({ default: module.Cta4 })), props: cta4 }
         ]}
         offset="200px"
-      />
+      /> */}
 
       {/* <LazySection
         sections={[

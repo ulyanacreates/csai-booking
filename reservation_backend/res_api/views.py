@@ -1,7 +1,7 @@
 from django.shortcuts import render
 import json
 from django.http import HttpRequest, HttpResponse
-from res_api.models import User, ChatMessage,ChatSession,ReservationInfo, Restaurant
+from res_api.models import User, ChatMessage,ChatSession,ReservationInfo, Restaurant, Menu
 from .utils.utils_request import BAD_METHOD, request_failed, request_success, return_field,generate_qr_base64
 from .utils.utils_require import MAX_CHAR_LENGTH, CheckRequire, require
 from .utils.utils_time import get_timestamp
@@ -78,7 +78,8 @@ def register(req: HttpRequest):
     token = generate_jwt_token(username_)
     return request_success({"token": token,
                             "user_name": username_,
-                            "user_id":user_.id})
+                            "user_id":user_.id, 
+                            "user_type": user_.user_type})
 
 def verify_loggedin(req: HttpRequest):
     if req.method != "POST":
@@ -258,9 +259,162 @@ def restaurant_reservations(req: HttpRequest, restaurant_name: str):
     return request_success({"data": response, "restaurant_name": restaurant_name, "total_reservations": len(response)})
 
 
+def menu_list_create(req: HttpRequest):
+    """Handle GET (list menus) and POST (create menu item) requests"""
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload:
+        return request_failed(2, "Invalid or expired JWT", 401)
+    
+    # Get the user from the JWT payload
+    try:
+        user = User.objects.get(name=jwt_payload["username"])
+    except User.DoesNotExist:
+        return request_failed(3, "User not found", 404)
+    
+    if req.method == "GET":
+        # List all menu items for this user/restaurant
+        menu_items = Menu.objects.filter(owner=user, is_active=True)
+        data = []
+        for item in menu_items:
+            data.append(item.serialize())
+        return request_success({"menu": data})
+    
+    elif req.method == "POST":
+        # Create a new menu item
+        try:
+            body = json.loads(req.body.decode("utf-8"))
+            name = require(body, "name", "string", err_msg="Missing or error type of [name]")
+            description = body.get("description", "")
+            price = body.get("price", "0.00")
+            category = body.get("category", "Uncategorized")
+            is_sold_out = body.get("isSoldOut", False)
+            
+            # Validate price
+            try:
+                price_decimal = float(price)
+                if price_decimal < 0:
+                    return request_failed(-1, "Price cannot be negative")
+            except (ValueError, TypeError):
+                return request_failed(-1, "Invalid price format")
+            
+            # Get restaurant name from user or use a default
+            restaurant_name = user.name if user.name else "Default Restaurant"
 
+            # Create the menu item
+            menu_item = Menu.objects.create(
+                owner=user,
+                restaurant_name=restaurant_name,
+                name=name,
+                description=description,
+                price=price_decimal,
+                category=category,
+                is_sold_out=is_sold_out
+            )
+            
+            return request_success({
+                "message": "Menu item created successfully",
+                "id": menu_item.id,
+                "item": menu_item.serialize()
+            })
+            
+        except Exception as e:
+            return request_failed(-1, f"Error creating menu item: {str(e)}")
+    else:
+        return BAD_METHOD
     
 
-
+def menu_detail(req: HttpRequest, menu_id: int):
+    """Handle GET, PUT/PATCH (update), and DELETE requests for specific menu items"""
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload:
+        return request_failed(2, "Invalid or expired JWT", 401)
+    
+    # Get the user from the JWT payload
+    try:
+        user = User.objects.get(name=jwt_payload["username"])
+    except User.DoesNotExist:
+        return request_failed(3, "User not found", 404)
+    
+    # Get the menu item
+    try:
+        menu_item = Menu.objects.get(id=menu_id, owner=user, is_active=True)
+    except Menu.DoesNotExist:
+        return request_failed(4, "Menu item not found", 404)
+    
+    if req.method == "GET":
+        # Get specific menu item
+        return request_success({"item": menu_item.serialize()})
+    elif req.method == "PUT" or req.method == "PATCH":
+        # Update menu item
+        try:
+            body = json.loads(req.body.decode("utf-8"))
+            
+            # Update fields if provided
+            if "name" in body:
+                menu_item.name = body["name"]
+            if "description" in body:
+                menu_item.description = body["description"]
+            if "price" in body:
+                try:
+                    price_decimal = float(body["price"])
+                    if price_decimal < 0:
+                        return request_failed(-1, "Price cannot be negative")
+                    menu_item.price = price_decimal
+                except (ValueError, TypeError):
+                    return request_failed(-1, "Invalid price format")
+            if "category" in body:
+                menu_item.category = body["category"]
+            if "isSoldOut" in body:
+                menu_item.is_sold_out = body["isSoldOut"]
+            
+            menu_item.save()
+            return request_success({
+                "message": "Menu item updated successfully",
+                "item": menu_item.serialize()
+            })
+            
+        except Exception as e:
+            return request_failed(-1, f"Error updating menu item: {str(e)}")
+    
+    elif req.method == "DELETE":
+        # Soft delete menu item
+        menu_item.is_active = False
+        menu_item.save()
+        
+        return request_success({"message": "Menu item deleted successfully"})
+    
+    else:
+        return BAD_METHOD
     
 
+def toggle_menu_item_availability(req: HttpRequest, menu_id: int):
+    """Toggle the sold out status of a menu item"""
+    if req.method != "PATCH":
+        return BAD_METHOD
+        
+    jwt_token = req.headers.get("Authorization")
+    jwt_payload = check_jwt_token(jwt_token)
+    if not jwt_payload:
+        return request_failed(2, "Invalid or expired JWT", 401)
+    
+    # Get the user from the JWT payload
+    try:
+        user = User.objects.get(name=jwt_payload["username"])
+    except User.DoesNotExist:
+        return request_failed(3, "User not found", 404)
+    
+    # Get the menu item
+    try:
+        menu_item = Menu.objects.get(id=menu_id, owner=user, is_active=True)
+    except Menu.DoesNotExist:
+        return request_failed(4, "Menu item not found", 404)
+    
+    menu_item.is_sold_out = not menu_item.is_sold_out
+    menu_item.save()
+    
+    return request_success({
+        "message": f"Menu item {'marked as sold out' if menu_item.is_sold_out else 'marked as available'}",
+        "item": menu_item.serialize()
+    })

@@ -27,6 +27,7 @@ import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
+import { useRouter } from 'next/navigation'; // Add this import
 
 // @project
 import useDataThemeMode from '@/hooks/useDataThemeMode';
@@ -46,12 +47,14 @@ const dummyFloorplanItems = [
 export default function Business() {
   useDataThemeMode();
   const theme = useTheme();
+  const router = useRouter();
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
   const [reservations, setReservations] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [openRestaurantNameModal, setOpenRestaurantNameModal] = useState(false);
   const [restaurantName, setRestaurantName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showLoginAlert, setShowLoginAlert] = useState(false); // Add this state
 
   useEffect(() => {
     document.title = 'Business View | AI Customer Service';
@@ -66,91 +69,93 @@ export default function Business() {
     loadBusinessData();
   }, []);
 
-  const loadBusinessData = async () => {
+const loadBusinessData = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.token) {
+      setShowLoginAlert(true);
+      // setLoading(false);
+      // Navigate back after showing the alert for a bit longer
+      setTimeout(() => {
+        router.back(); // or router.push('/login') to go to specific login page
+      }, 1); // Give user time to see the alert
+      return;
+    }
+
+    const headers = {
+      Authorization: `${user.token}`,
+    };
+
+    // Load reservations for a specific restaurant
+    // You'll need to determine which restaurant this business user manages
+    // For now, I'll use a placeholder - you might want to store this in user data
+    const restaurantName = user.user_name || "Default"; // Replace with actual restaurant name
+    
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.token) {
-        console.error("User data or token not found in localStorage.");
-        setLoading(false);
-        return;
-      }
-
-      const headers = {
-        Authorization: `${user.token}`,
-      };
-
-      // Load reservations for a specific restaurant
-      // You'll need to determine which restaurant this business user manages
-      // For now, I'll use a placeholder - you might want to store this in user data
-      const restaurantName = user.restaurant_name || "The Eight"; // Replace with actual restaurant name
+      const reservationsResponse = await axios.get(`${API_URL}/api/restaurant/reservations/${encodeURIComponent(restaurantName)}`, { headers });
+      console.log('Restaurant Reservations Response:', reservationsResponse.data);
       
-      try {
-        const reservationsResponse = await axios.get(`${API_URL}/api/restaurant/reservations/${encodeURIComponent(restaurantName)}`, { headers });
-        console.log('Restaurant Reservations Response:', reservationsResponse.data);
+      if (reservationsResponse.data && Array.isArray(reservationsResponse.data.data)) {
+        const processedReservations = reservationsResponse.data.data.map((reservation, index) => ({
+          ...reservation,
+          id: reservation.customer_id || `reservation-${index}-${Date.now()}`,
+          name: reservation.customer_name,
+          time: new Date(reservation.res_time).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          }),
+          numberOfPeople: reservation.num,
+          tableNumber: `T${index + 1}` // You might want to add actual table assignment logic
+        }));
+        // Sort reservations by time
+        const sortedReservations = processedReservations.sort((a, b) => {
+          return new Date(a.res_time) - new Date(b.res_time);
+        });
         
-        if (reservationsResponse.data && Array.isArray(reservationsResponse.data.data)) {
-          const processedReservations = reservationsResponse.data.data.map((reservation, index) => ({
-            ...reservation,
-            id: reservation.customer_id || `reservation-${index}-${Date.now()}`,
-            name: reservation.customer_name,
-            time: new Date(reservation.res_time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            }),
-            numberOfPeople: reservation.num,
-            tableNumber: `T${index + 1}` // You might want to add actual table assignment logic
-          }));
-          // Sort reservations by time
-          const sortedReservations = processedReservations.sort((a, b) => {
-            return new Date(a.res_time) - new Date(b.res_time);
-          });
-          
-          setReservations(sortedReservations);
-        } else {
-          console.warn('No reservations data found for restaurant');
-          setReservations([]);
-        }
-      } catch (reservationsError) {
-        console.error("Error fetching restaurant reservations:", reservationsError);
+        setReservations(sortedReservations);
+      } else {
+        console.warn('No reservations data found for restaurant');
         setReservations([]);
       }
+    } catch (reservationsError) {
+      console.error("Error fetching restaurant reservations:", reservationsError);
+      setReservations([]);
+    }
 
-      // Load menu items
-      try {
-        const menuResponse = await axios.get(`${API_URL}/api/menu`, { headers });
-        console.log('Menu Response:', menuResponse.data);
-        
-        if (menuResponse.data && Array.isArray(menuResponse.data.menu)) {
-          const processedMenuItems = menuResponse.data.menu.map((item, index) => ({
-            ...item,
-            id: item.id || `menu-${index}-${Date.now()}`,
-            isEditing: false
-          }));
-          setMenuItems(processedMenuItems);
-        } else {
-          console.warn('No menu data found, using fallback');
-          setMenuItems([
-            { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
-            { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
-            { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
-          ]);
-        }
-      } catch (menuError) {
-        console.error("Error fetching menu:", menuError);
+    // Load menu items
+    try {
+      const menuResponse = await axios.get(`${API_URL}/api/menu`, { headers }); // Remove the trailing slash
+      console.log('Menu Response:', menuResponse.data);
+      
+      if (menuResponse.data && Array.isArray(menuResponse.data.menu)) {
+        const processedMenuItems = menuResponse.data.menu.map((item, index) => ({
+          ...item,
+          id: item.id || `menu-${index}-${Date.now()}`,
+          isEditing: false
+        }));
+        setMenuItems(processedMenuItems);
+      } else {
+        console.warn('No menu data found, using fallback');
         setMenuItems([
           { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
           { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
           { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
         ]);
       }
-
-    } catch (error) {
-      console.error("Error loading business data:", error);
-    } finally {
-      setLoading(false);
+    } catch (menuError) {
+      console.error("Error fetching menu:", menuError);
+      setMenuItems([
+        { id: 'm1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese, special sauce', price: '12.99', category: 'Main Course', isEditing: false },
+        { id: 'm2', name: 'Caesar Salad', description: 'Romaine lettuce, croutons, parmesan, Caesar dressing', price: '9.50', category: 'Appetizer', isEditing: false },
+        { id: 'm3', name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center', price: '7.00', category: 'Dessert', isEditing: false },
+      ]);
     }
-  };
+
+  } catch (error) {
+    console.error("Error loading business data:", error);
+  }
+};
 
   const listItemApproxHeight = 60; 
   const maxListHeight = listItemApproxHeight * 5.5;
@@ -199,8 +204,10 @@ export default function Business() {
   };
   
   const addNewMenuItem = async () => {
+    console.log('Adding new menu item...');
     try {
       const user = JSON.parse(localStorage.getItem('user'));
+      console.log('User data:', user);
       const headers = {
         Authorization: `${user.token}`,
       };
@@ -298,7 +305,7 @@ export default function Business() {
       };
 
       // await axios.post(`${API_URL}/api/restaurant/setup`, payload, { headers });
-      // console.log('Restaurant name saved successfully:', restaurantName);
+      console.log('Restaurant name saved successfully:', restaurantName);
     } catch (error) {
       console.error('Error saving restaurant name:', error);
     }
@@ -307,15 +314,15 @@ export default function Business() {
     localStorage.removeItem('isFirstLogin');
   };
 
-  if (loading) {
-    return (
-      <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>
-        <Container>
-          <Typography variant="h4" align="center">Loading...</Typography>
-        </Container>
-      </Box>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>
+  //       <Container>
+  //         <Typography variant="h4" align="center">Loading...</Typography>
+  //       </Container>
+  //     </Box>
+  //   );
+  // }
 
   return (
     <Box component="main" sx={{ py: { xs: 6, md: 10 } }}>

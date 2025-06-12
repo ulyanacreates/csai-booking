@@ -4,6 +4,7 @@ import NextLink from 'next/link';
 
 // @mui
 import Button from '@mui/material/Button';
+import { PAGE_PATH, SECTION_PATH } from '@/path';
 
 /***************************  NAVBAR - SECONDARY BUTTON  ***************************/
 
@@ -13,12 +14,13 @@ export default function NavSecondaryButton({ sx, children, ...rest }) {
       variant="outlined"
       size="small"
       sx={sx}
+      href={PAGE_PATH.login}
+      component={NextLink}
       {...rest}
-      {...(rest?.href && { component: NextLink })}
       rel="noopener noreferrer"
       aria-label="nav-secondary-btn"
     >
-      {children || 'Secondary Button'}
+      {children || 'Account'}
     </Button>
   );
 }

@@ -71,3 +71,40 @@ class Restaurant(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class Menu(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='menu_items')
+    restaurant_name = models.CharField(max_length=MAX_CHAR_LENGTH, default="")
+    name = models.CharField(max_length=MAX_CHAR_LENGTH)
+    description = models.TextField(blank=True, default="")
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    category = models.CharField(max_length=MAX_CHAR_LENGTH, default="Uncategorized")
+    is_sold_out = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["owner", "restaurant_name"]),
+            models.Index(fields=["category"]),
+        ]
+        ordering = ['category', 'name']
+
+    def serialize(self):
+        return {    
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "price": str(self.price),
+            "category": self.category,
+            "isSoldOut": self.is_sold_out,
+            "isActive": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    def __str__(self):
+        return f"{self.name} - {self.restaurant_name}"
